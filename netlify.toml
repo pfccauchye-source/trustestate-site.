@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrustEstate — Analyse d'un bien</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0E14; --ink-2:#10161F; --card:#141B25;
+    --paper-2:#ECE7DA; --mint:#1FE0A0; --mint-deep:#0FB37E;
+    --coral:#FF7A59; --amber:#FFB547; --muted:#8A93A2;
+    --line:rgba(255,255,255,0.10);
+    --display:"Bricolage Grotesque",sans-serif; --body:"Hanken Grotesk",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--body);background:var(--ink);color:var(--paper-2);line-height:1.55;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--mint);color:var(--ink)}
+  h1,h2,h3,h4{font-family:var(--display);letter-spacing:-0.02em}
+  a{color:var(--mint);text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  header.top{display:flex;align-items:center;gap:11px;padding:22px 24px;border-bottom:1px solid var(--line)}
+  .logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--mint),var(--mint-deep));display:flex;align-items:center;justify-content:center;color:var(--ink);font-weight:800;font-size:17px;font-family:var(--display)}
+  .brand{font-family:var(--display);font-weight:800;font-size:18px;color:#F7F5EF}
+
+  .hero{padding:54px 0 30px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--line);border-radius:100px;font-size:12px;font-weight:600;color:var(--mint);background:rgba(31,224,160,0.06);margin-bottom:20px}
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+  h1{font-size:clamp(30px,5vw,46px);color:#F7F5EF;max-width:18ch}
+  h1 em{font-style:normal;color:var(--mint)}
+  .sub{color:var(--muted);font-size:17px;max-width:60ch;margin-top:16px}
+
+  .panel{background:var(--ink-2);border:1px solid var(--line);border-radius:20px;padding:28px;margin-top:10px}
+  .form-grid{display:grid;grid-template-columns:1fr;gap:16px}
+  label{display:block;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  input{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:14px 15px;font-family:var(--body);font-size:15px;color:#F7F5EF;transition:border-color .2s}
+  input:focus{outline:none;border-color:var(--mint)}
+  textarea{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:14px 15px;font-family:var(--body);font-size:14px;color:#F7F5EF;resize:vertical;transition:border-color .2s}
+  textarea:focus{outline:none;border-color:var(--mint)}
+  .dd-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:13.5px}
+  .dd-item .name{flex:1;color:#F7F5EF;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dd-item .status{font-size:12px;color:var(--muted);flex-shrink:0}
+  .dd-item .rm{background:none;border:none;color:var(--coral);cursor:pointer;font-size:16px;flex-shrink:0;padding:2px 6px}
+  .dd-report{font-size:14.5px;color:var(--paper-2);line-height:1.65}
+  .dd-report p{margin-top:10px}
+  .chat-msg{max-width:82%;padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.5}
+  .chat-msg.user{align-self:flex-end;background:var(--mint);color:var(--ink);font-weight:500;border-bottom-right-radius:3px}
+  .chat-msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--line);color:var(--paper-2);border-bottom-left-radius:3px}
+  .chat-msg.err{align-self:flex-start;background:rgba(255,122,89,0.1);border:1px solid rgba(255,122,89,0.35);color:var(--coral)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 22px;border-radius:100px;font-weight:700;font-size:15px;cursor:pointer;border:none;background:var(--mint);color:var(--ink);transition:transform .15s,box-shadow .2s;width:100%}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px -8px rgba(31,224,160,0.5)}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+  select{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:14px 15px;font-family:var(--body);font-size:15px;color:#F7F5EF;appearance:none;cursor:pointer}
+  select:focus{outline:none;border-color:var(--mint)}
+  .contact-sec{padding:20px 0 70px}
+  .contact-sec h2{font-size:clamp(24px,4vw,34px);color:#F7F5EF}
+  .contact-sec .sub{margin-bottom:22px}
+  .form-success{display:none;text-align:center;padding:24px 10px}
+  .form-success.show{display:block}
+  .form-success .ok{width:50px;height:50px;border-radius:50%;background:rgba(31,224,160,0.15);color:var(--mint);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px}
+  .form-success h3{font-family:var(--display);font-size:20px;color:#F7F5EF;margin-bottom:6px}
+
+  .note-banner{display:none;margin-top:16px;padding:12px 16px;border-radius:12px;font-size:13px}
+  .note-banner.sim{display:block;background:rgba(255,181,71,0.10);border:1px solid rgba(255,181,71,0.4);color:var(--amber)}
+  .note-banner.err{display:block;background:rgba(255,122,89,0.10);border:1px solid rgba(255,122,89,0.4);color:var(--coral)}
+
+  /* results */
+  #results{display:none;margin-top:26px}
+  #results.show{display:block}
+  .res-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+  .res-addr{font-family:var(--display);font-weight:700;font-size:20px;color:#F7F5EF}
+  .res-meta{font-size:13px;color:var(--muted)}
+
+  .score-row{display:grid;grid-template-columns:260px 1fr;gap:26px;align-items:center;margin-top:18px}
+  .score-ring{position:relative;width:200px;height:200px;margin:0 auto}
+  .score-ring svg{transform:rotate(-90deg)}
+  .score-ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .score-ring .val b{font-family:var(--display);font-size:56px;font-weight:800;line-height:1}
+  .score-ring .val span{font-size:13px;color:var(--muted)}
+  .verdict{font-family:var(--display);font-weight:700;font-size:18px;text-align:center;margin-top:6px}
+
+  .subscores{display:grid;grid-template-columns:1fr;gap:12px}
+  .ss{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .ss-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .ss-name{font-family:var(--display);font-weight:700;font-size:14px;color:#F7F5EF}
+  .ss-val{font-family:var(--display);font-weight:800;font-size:15px}
+  .bar{height:7px;border-radius:4px;background:rgba(255,255,255,0.08);overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:4px;background:var(--mint)}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .block{background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:20px}
+  .block h4{font-size:14px;color:var(--mint);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em}
+  .kv{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+  .kv:first-of-type{border-top:none}
+  .kv .k{color:var(--muted)} .kv .v{color:#F7F5EF;font-weight:600}
+  .finding{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+  .finding:first-of-type{border-top:none}
+  .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .dot.good{background:var(--mint)} .dot.warn{background:var(--amber)} .dot.bad{background:var(--coral)}
+
+  .method{margin-top:18px;font-size:13px;color:var(--muted);background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .method b{color:#F7F5EF}
+  .sources{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .src{padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--paper-2)}
+  .disclaimer{font-size:12px;color:var(--muted);margin:22px 0 50px;text-align:center;line-height:1.5}
+
+  .loader{display:none;margin-top:24px;text-align:center;color:var(--muted);font-size:14px}
+  .loader.show{display:block}
+  .report-text{font-size:14.5px;color:#F7F5EF;line-height:1.65}
+  .report-text p{margin:0 0 11px}
+  .rep-loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+  .mini-spin{width:16px;height:16px;border:2px solid rgba(255,255,255,0.12);border-top-color:var(--mint);border-radius:50%;display:inline-block;animation:spin .8s linear infinite}
+  .spinner{width:34px;height:34px;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--mint);border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:760px){.two,.cols,.score-row{grid-template-columns:1fr}.score-row{gap:16px}}
+
+  .reco-banner{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:14px;background:var(--card);border:1px solid var(--line);margin:16px 0 4px}
+  .reco-emoji{font-size:32px;line-height:1}
+  .reco-label{font-family:var(--display);font-weight:800;font-size:19px;color:#F7F5EF}
+  .reco-sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+  .crit-row{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--line)}
+  .crit-row:first-of-type{border-top:none}
+  .crit-name{width:150px;flex-shrink:0;font-size:13.5px;font-weight:600;color:#F7F5EF}
+  .crit-note{font-size:11.5px;color:var(--muted);width:170px;flex-shrink:0}
+  .crit-bar{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,0.08);overflow:hidden}
+  .crit-bar > i{display:block;height:100%;border-radius:4px}
+  .crit-val{width:44px;text-align:right;font-family:var(--display);font-weight:800;font-size:13px;flex-shrink:0}
+  @media(max-width:640px){.crit-note{display:none}.crit-name{width:110px}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <span class="logo-mark">T</span><span class="brand">TrustEstate</span>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow"><span class="pulse"></span>Analyse en données ouvertes</span>
+    <h1>Analysez un bien à partir d'un <em>lien</em> ou d'une <em>adresse</em>.</h1>
+    <p class="sub">Collez le lien d'une annonce ou saisissez l'adresse du bien. TrustEstate interroge les données publiques (prix de vente réels, risques) et produit un score transparent et explicable.</p>
+
+    <div class="panel">
+      <div class="form-grid">
+        <div>
+          <label for="addr">Lien de l'annonce ou adresse du bien</label>
+          <input id="addr" type="text" placeholder="https://www.seloger.com/... ou 12 rue de la République, 69001 Lyon" autocomplete="off">
+          <p class="hint" id="addrHint">Collez un lien SeLoger/Leboncoin/Bien'ici, ou saisissez directement une adresse postale française.</p>
+        </div>
+        <div class="two">
+          <div>
+            <label for="surface">Surface (m²) — optionnel</label>
+            <input id="surface" type="number" min="1" placeholder="68">
+          </div>
+          <div>
+            <label for="prix">Prix demandé (€) — optionnel</label>
+            <input id="prix" type="number" min="1" placeholder="295000">
+          </div>
+        </div>
+        <button class="btn" id="go">Analyser le bien →</button>
+      </div>
+      <div class="note-banner" id="banner"></div>
+    </div>
+
+    <div class="panel" id="pasteAdPanel" style="margin-top:16px">
+      <label for="adText">📋 Le lien ne suffit pas ? Collez le texte de l'annonce</label>
+      <textarea id="adText" placeholder="Collez ici le titre, la description et le prix de l'annonce (copiez-collez depuis la page du site d'annonces)…" style="min-height:110px"></textarea>
+      <p class="hint">On ne peut pas récupérer automatiquement le contenu d'un lien — les portails l'interdisent dans leurs CGU. Copiez-collez le texte affiché sur la page : notre IA en extrait l'adresse, le prix et la surface.</p>
+      <button class="btn btn-ghost" id="extractBtn" type="button" style="margin-top:12px;width:auto;padding:12px 22px">Extraire et analyser →</button>
+      <div class="note-banner" id="extractBanner"></div>
+    </div>
+
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      Interrogation des données ouvertes…
+    </div>
+
+    <div id="results">
+      <div class="panel">
+        <div class="res-head">
+          <div class="res-addr" id="rAddr">—</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="res-meta" id="rMeta"></div>
+            <button class="btn btn-ghost" id="pdfBtn" type="button" style="width:auto;padding:9px 16px;font-size:13px">📄 Export PDF</button>
+          </div>
+        </div>
+
+        <div class="reco-banner" id="recoBanner">
+          <span class="reco-emoji" id="recoEmoji"></span>
+          <div>
+            <div class="reco-label" id="recoLabel"></div>
+            <div class="reco-sub" id="recoSub"></div>
+          </div>
+        </div>
+
+        <div class="score-row">
+          <div>
+            <div class="score-ring">
+              <svg width="200" height="200" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14"/>
+                <circle id="ring" cx="100" cy="100" r="88" fill="none" stroke="var(--mint)" stroke-width="14" stroke-linecap="round" stroke-dasharray="552.92" stroke-dashoffset="552.92" style="transition:stroke-dashoffset .9s ease"/>
+              </svg>
+              <div class="val"><b id="scoreNum" style="color:var(--mint)">0</b><span>/ 100</span></div>
+            </div>
+            <div class="verdict" id="verdict"></div>
+          </div>
+          <div class="subscores" id="subscores"></div>
+        </div>
+      </div>
+
+      <div class="block" id="insightsBlock" style="margin-top:16px;border-color:rgba(31,224,160,0.35)">
+        <h4>💡 Insights actionnables</h4>
+        <div id="insights"></div>
+      </div>
+
+      <div class="block" style="margin-top:16px">
+        <h4>Score détaillé par critère</h4>
+        <div id="criteria"></div>
+      </div>
+
+      <div class="cols" style="margin-top:16px">
+        <div class="block" id="valuationBlock">
+          <h4>💰 Valorisation & négociation</h4>
+          <div id="valuation"></div>
+        </div>
+        <div class="block" id="rentalBlock">
+          <h4>🏠 Analyse locative</h4>
+          <div id="rental"></div>
+        </div>
+      </div>
+
+      <div class="cols">
+        <div class="block">
+          <h4>Marché local (DVF)</h4>
+          <div id="market"></div>
+        </div>
+        <div class="block">
+          <h4>Risques (Géorisques)</h4>
+          <div id="risks"></div>
+        </div>
+      </div>
+
+      <div class="block" id="energyBlock" style="margin-top:16px;display:none">
+        <h4>Performance énergétique (DPE)</h4>
+        <div id="energy"></div>
+      </div>
+
+      <div class="block" id="trendBlock" style="margin-top:16px;display:none">
+        <h4>Tendance des prix & ventes comparables</h4>
+        <div id="trend"></div>
+      </div>
+
+      <div class="block" id="quartierBlock" style="margin-top:16px;display:none">
+        <h4>Quartier & commodités</h4>
+        <div id="quartier"></div>
+      </div>
+
+      <div class="block" id="mapBlock" style="margin-top:16px;display:none">
+        <h4>🗺️ Carte interactive</h4>
+        <div id="mapLegend" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:12px;color:var(--muted)"></div>
+        <div id="mapEl" style="height:380px;border-radius:12px;overflow:hidden;border:1px solid var(--line)"></div>
+        <p class="hint" style="margin-top:8px">Bien analysé, ventes comparables (DVF) et commodités du quartier (OpenStreetMap) dans un rayon d'environ 800 m.</p>
+      </div>
+
+      <div class="block" style="margin-top:16px">
+        <h4>Points d'attention</h4>
+        <div id="findings"></div>
+      </div>
+
+      <div class="block" style="margin-top:16px;border-color:rgba(255,181,71,0.3)">
+        <h4>🚧 Pas encore disponible en données ouvertes</h4>
+        <div class="finding"><span class="dot warn"></span>Historique précis des annonces de ce bien (baisses de prix, durée de publication) — nécessite un partenariat avec les portails d'annonces</div>
+        <div class="finding"><span class="dot warn"></span>Biens comparables actuellement en vente — le scraping des portails n'est pas autorisé par leurs conditions d'utilisation</div>
+        <div class="finding"><span class="dot warn"></span>Projets d'urbanisme locaux — non centralisés en open data à ce jour</div>
+        <div class="finding"><span class="dot warn"></span>Données de sécurité / délinquance — aucune source ouverte fiable à l'adresse en France</div>
+        <p class="hint" style="margin-top:10px">Ces éléments demandent des partenariats (agences, portails, mairies). Le bloc ci-dessous permet de compenser une partie de ce manque : vous pouvez déposer les documents que <b>seul le vendeur possède</b>.</p>
+      </div>
+
+      <div class="block" id="ddBlock" style="margin-top:16px;border-color:rgba(31,224,160,0.35)">
+        <h4>🗂️ Dossier de due diligence — documents du bien</h4>
+        <p class="hint" style="margin-bottom:14px">Déposez le DPE officiel, les diagnostics (amiante, plomb, termites…), le compromis de vente ou les PV de copropriété. L'IA les lit et les croise avec l'analyse en données ouvertes ci-dessus : cohérences, écarts, informations nouvelles. <b>Rien n'est conservé</b> : les fichiers sont traités dans votre navigateur puis le texte est envoyé une seule fois pour l'analyse.</p>
+
+        <input type="file" id="ddFiles" accept=".pdf,.txt" multiple style="display:none">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-ghost" id="ddAddBtn" type="button" style="width:auto;padding:11px 18px">📎 Ajouter un document (PDF/TXT)</button>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label for="ddPasteLabel">Ou collez un texte (ex. annonce, extrait de compromis)</label>
+          <input id="ddPasteLabel" type="text" placeholder="Nom du document, ex. Compromis de vente" style="margin-bottom:8px">
+          <textarea id="ddPasteText" placeholder="Collez ici le texte du document…" style="min-height:90px"></textarea>
+          <button class="btn btn-ghost" id="ddAddPaste" type="button" style="width:auto;padding:9px 16px;margin-top:8px;font-size:13px">Ajouter ce texte</button>
+        </div>
+
+        <div id="ddList"></div>
+
+        <button class="btn" id="ddAnalyze" type="button" style="width:auto;padding:13px 22px;margin-top:14px" disabled>Analyser les documents →</button>
+        <div id="ddResult" style="margin-top:16px"></div>
+      </div>
+
+      <div class="block" id="reportBlock" style="margin-top:16px">
+        <h4>Rapport TrustEstate · IA</h4>
+        <div id="reportBody">
+          <button class="btn" id="genReport" style="width:auto;padding:12px 22px">Générer le rapport IA →</button>
+          <p class="hint" style="margin-top:10px">Rédige un rapport en langage naturel à partir des données ci-dessus. Nécessite la fonction « report » déployée et une clé API configurée dans Netlify.</p>
+        </div>
+      </div>
+
+      <div class="block" id="chatBlock" style="margin-top:16px">
+        <h4>💬 Posez une question sur ce bien</h4>
+        <p class="hint" style="margin-bottom:12px">L'assistant répond uniquement à partir des données déjà calculées ci-dessus (pas de connaissances générales sur le marché).</p>
+        <div id="chatLog" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"></div>
+        <div style="display:flex;gap:10px">
+          <input id="chatInput" type="text" placeholder="Ex. Ce bien est-il surévalué ? Quel prix proposer ?" style="flex:1">
+          <button class="btn" id="chatSend" type="button" style="width:auto;padding:0 20px">Envoyer</button>
+        </div>
+      </div>
+
+      <div class="method">
+        <b>Méthode (TrustScore, transparente).</b> Note globale sur 100 pondérée sur quatre axes : <b>Valeur</b> (30 % — positionnement prix vs ventes réelles DVF + liquidité), <b>Risque</b> (25 % — risques naturels Géorisques + risque réglementaire DPE), <b>Potentiel</b> (25 % — tendance des prix DVF + dynamique) et <b>Qualité</b> (20 % — commodités du quartier : transports, écoles, commerces, santé, via OpenStreetMap). Les axes affichent « estimation » lorsque les données sous-jacentes sont trop rares. Les montants affichés (rénovation, écart de prix) sont indicatifs, avec hypothèses précisées.
+        <div class="sources">
+          <span class="src">Base Adresse Nationale</span>
+          <span class="src">DVF Etalab</span>
+          <span class="src">Géorisques</span>
+          <span class="src">DPE ADEME</span>
+          <span class="src">OpenStreetMap</span>
+        </div>
+      </div>
+
+      <p class="disclaimer">Analyse indicative fondée sur des données publiques, sans valeur d'expertise. Les données peuvent être incomplètes ou datées. Ne remplace pas un diagnostic professionnel.</p>
+    </div>
+  </div>
+</section>
+
+<section class="contact-sec">
+  <div class="wrap" style="max-width:620px">
+    <h2>Une question, une démo ?</h2>
+    <p class="sub">Réservez directement un créneau, ou laissez-nous vos coordonnées.</p>
+    <a href="https://calendly.com/VOTRE-LIEN-CALENDLY/demo" target="_blank" rel="noopener" class="btn" style="width:auto;padding:14px 24px;margin-bottom:18px">📅 Réserver une démo</a>
+    <div class="panel">
+      <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="contactForm">
+        <input type="hidden" name="form-name" value="contact">
+        <p style="display:none"><label>Ne pas remplir : <input name="bot-field"></label></p>
+        <div class="two" style="margin-bottom:16px">
+          <div>
+            <label for="cNom">Nom complet</label>
+            <input id="cNom" type="text" name="nom" required placeholder="Jean Dupont">
+          </div>
+          <div>
+            <label for="cEmail">Email</label>
+            <input id="cEmail" type="email" name="email" required placeholder="jean@email.com">
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <label for="cProfil">Vous êtes</label>
+          <select id="cProfil" name="profil" required>
+            <option value="" disabled selected>Sélectionnez…</option>
+            <option>Un particulier</option>
+            <option>Une agence immobilière</option>
+            <option>Banque ou assurance</option>
+            <option>Investisseur</option>
+            <option>Notaire ou juriste</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <div style="margin-bottom:18px">
+          <label for="cMsg">Message (optionnel)</label>
+          <input id="cMsg" type="text" name="message" placeholder="Votre besoin, votre projet…">
+        </div>
+        <button type="submit" class="btn" style="width:auto;padding:14px 24px">Envoyer →</button>
+        <p class="hint" style="margin-top:12px">Vos données ne sont jamais revendues. Les contacts arrivent dans l'onglet Forms de Netlify.</p>
+      </form>
+      <div class="form-success" id="contactSuccess">
+        <div class="ok">✓</div>
+        <h3>Merci, c'est noté.</h3>
+        <p style="color:var(--muted)">Nous revenons vers vous très vite.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+const C = 2 * Math.PI * 88; // ring circumference
+
+function setBanner(type, msg){
+  const b = $('banner');
+  b.className = 'note-banner ' + (type || '');
+  b.textContent = msg || '';
+}
+
+// ---- Data sources ----
+async function geocode(q){
+  const url = 'https://api-adresse.data.gouv.fr/search/?limit=1&q=' + encodeURIComponent(q);
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('geocode');
+  const j = await r.json();
+  if(!j.features || !j.features.length) throw new Error('Adresse introuvable');
+  const f = j.features[0];
+  return {
+    lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1],
+    label: f.properties.label, citycode: f.properties.citycode,
+    city: f.properties.city, postcode: f.properties.postcode
+  };
+}
+
+// DVF via community API (CORS-friendly). Returns transactions near a point.
+async function fetchDVF(lat, lon){
+  const url = '/.netlify/functions/dvf?lat=' + lat + '&lon=' + lon + '&dist=600';
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('dvf');
+  const j = await r.json();
+  const feats = (j.features || j.resultats || []);
+  const sales = [];
+  feats.forEach(it => {
+    const p = it.properties || it;
+    const val = +(p.valeur_fonciere || p.valeurfonc || 0);
+    const surf = +(p.surface_relle_bati || p.surface_reelle_bati || p.surface || 0);
+    const type = (p.type_local || p.typlocal || '').toLowerCase();
+    const year = (p.date_mutation || p.datemut || '').slice(0,4);
+    if(val > 5000 && surf > 8 && (type.includes('appart') || type.includes('maison'))){
+      const geom = it.geometry && Array.isArray(it.geometry.coordinates) ? it.geometry.coordinates : null;
+      const lat2 = geom ? geom[1] : (+(p.lat) || null);
+      const lon2 = geom ? geom[0] : (+(p.lon) || null);
+      sales.push({ ppm2: val/surf, surf, type, year:+year || null, lat: lat2, lon: lon2 });
+    }
+  });
+  return { sales, unavailable: !!j.dataUnavailable };
+}
+
+// Géorisques: risk report for a point.
+async function fetchRisks(lat, lon){
+  const url = '/.netlify/functions/georisques?lat=' + lat + '&lon=' + lon;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('georisques');
+  return await r.json();
+}
+
+// DPE (ADEME): nearest declared energy class around the point.
+function haversine(la1, lo1, la2, lo2){
+  const R = 6371000, t = x => x * Math.PI / 180;
+  const dla = t(la2 - la1), dlo = t(lo2 - lo1);
+  const a = Math.sin(dla/2)**2 + Math.cos(t(la1))*Math.cos(t(la2))*Math.sin(dlo/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+async function fetchDPE(lat, lon){
+  const url = '/.netlify/functions/dpe?lat=' + lat + '&lon=' + lon + '&dist=200';
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('dpe');
+  const j = await r.json();
+  const arr = j.results || j.data || j.lines || [];
+  const valid = ['A','B','C','D','E','F','G'];
+  let best = null, bestD = Infinity;
+  arr.forEach(rec => {
+    const cls = String(rec.etiquette_dpe || '').toUpperCase().trim();
+    if(!valid.includes(cls)) return;
+    let d = Infinity;
+    const gp = rec._geopoint || rec.geopoint;
+    if(typeof gp === 'string' && gp.includes(',')){
+      const parts = gp.split(',').map(Number);
+      if(parts.length === 2 && isFinite(parts[0]) && isFinite(parts[1])) d = haversine(lat, lon, parts[0], parts[1]);
+    }
+    if(d < bestD){
+      bestD = d;
+      best = { cls, ges: String(rec.etiquette_ges || '').toUpperCase() || null, date: String(rec.date_etablissement_dpe || '').slice(0,10) || null, distance: isFinite(d) ? d : null };
+    }
+  });
+  return best ? Object.assign(best, { count: arr.length }) : null;
+}
+
+// Quartier (OpenStreetMap via Overpass): commodités autour du point.
+async function fetchQuartier(lat, lon){
+  const url = '/.netlify/functions/quartier?lat=' + lat + '&lon=' + lon + '&r=800';
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('quartier');
+  const j = await r.json();
+  if(j && typeof j.total === 'number') return j;
+  return null;
+}
+
+function median(arr){
+  if(!arr.length) return null;
+  const s = [...arr].sort((a,b)=>a-b);
+  const m = Math.floor(s.length/2);
+  return s.length % 2 ? s[m] : (s[m-1]+s[m])/2;
+}
+
+// ---- Scoring (transparent) ----
+function fmtEur(n){ return Number(Math.round(n)).toLocaleString('fr-FR'); }
+
+function buildScore(ctx){
+  const findings = [];
+  const insights = [];
+  const risks = ctx.risks || {};
+  const prix = ctx.prix, surface = ctx.surface, median = ctx.medianPpm2;
+
+  // --- RISK detail (Géorisques) ---
+  let riskPenalty = 0; const riskList = [];
+  function addRisk(active, label, weight, sev){ if(active){ riskPenalty += weight; riskList.push({label, sev}); } }
+  addRisk(risks.inondation, 'Inondation', 28, 'bad');
+  addRisk(risks.argile,     'Retrait-gonflement des argiles', 18, 'warn');
+  addRisk(risks.sismique,   'Sismicité', 12, 'warn');
+  addRisk(risks.radon,      'Radon', 10, 'warn');
+  addRisk(risks.mvt,        'Mouvement de terrain', 16, 'bad');
+  riskList.forEach(r => findings.push({sev:r.sev, t:'Risque : ' + r.label}));
+  ctx.riskList = riskList;
+  const climat = Math.max(0, 100 - riskPenalty);
+
+  // --- Liquidity (DVF volume) ---
+  const n = ctx.sales.length;
+  const liquidity = n >= 40 ? 90 : n >= 20 ? 75 : n >= 8 ? 58 : n >= 1 ? 42 : 25;
+  if(n === 0) findings.push({sev:'warn', t:'Peu/pas de ventes comparables trouvées à proximité'});
+  else if(n >= 20) findings.push({sev:'good', t:'Marché liquide (' + n + ' ventes comparables récentes)'});
+
+  // --- PRICE TREND (DVF dans le temps) ---
+  let trendPct = null;
+  const byYear = {};
+  ctx.sales.forEach(s => { if(s.year && s.ppm2) (byYear[s.year] = byYear[s.year] || []).push(s.ppm2); });
+  const years = Object.keys(byYear).map(Number).sort((a,b)=>a-b);
+  if(years.length >= 2){
+    const medY = y => { const a=[...byYear[y]].sort((x,z)=>x-z); const m=Math.floor(a.length/2); return a.length%2?a[m]:(a[m-1]+a[m])/2; };
+    const first = years[0], last = years[years.length-1], span = last - first;
+    if(span >= 1){
+      const g = Math.pow(medY(last)/medY(first), 1/span) - 1;
+      if(isFinite(g)) trendPct = g;
+    }
+  }
+  ctx.trendPct = trendPct;
+
+  // --- Price positioning + valuation en euros ---
+  let priceScore = null, deltaPct = null, ecartEur = null;
+  if(prix && surface && median){
+    const askPpm2 = prix / surface;
+    deltaPct = (askPpm2 - median) / median;
+    ecartEur = (askPpm2 - median) * surface;
+    priceScore = Math.max(0, Math.min(100, Math.round(70 - deltaPct * 140)));
+  }
+
+  // --- DPE / réglementaire ---
+  let energyScore = null;
+  const ESC = { A:95, B:85, C:72, D:58, E:45, F:32, G:20 };
+  const cls = ctx.energy && ctx.energy.cls;
+  if(cls && ESC[cls] != null){
+    energyScore = ESC[cls];
+    if(cls==='A'||cls==='B') findings.push({sev:'good', t:'Excellente performance énergétique (classe '+cls+')'});
+    else if(cls==='F'||cls==='G') findings.push({sev:'bad', t:'Passoire thermique (classe '+cls+')'});
+    else findings.push({sev:'warn', t:'Performance énergétique moyenne (classe '+cls+')'});
+  }
+
+  // ===== AXES TrustScore =====
+  // VALEUR (30%) : positionnement prix + liquidité
+  const valeur = priceScore !== null ? Math.round(0.7*priceScore + 0.3*liquidity) : liquidity;
+  // RISQUE (25%) : climatique + réglementaire (DPE)
+  const risque = energyScore !== null ? Math.round(0.55*climat + 0.45*energyScore) : climat;
+  // POTENTIEL (25%) : tendance des prix (réelle si dispo) + upside rénovation + liquidité
+  let pot, potEst;
+  if(trendPct !== null){
+    const trendScore = Math.max(0, Math.min(100, Math.round(55 + trendPct * 100 * 6)));
+    const renoBonus = (cls==='F'||cls==='G') ? 10 : (cls==='A'||cls==='B') ? 0 : 5;
+    pot = 0.7*trendScore + 0.3*liquidity + renoBonus;
+    potEst = false;
+  } else {
+    pot = liquidity * 0.6 + (energyScore !== null ? ((cls==='F'||cls==='G') ? 26 : (cls==='A'||cls==='B') ? 15 : 20) : 15);
+    potEst = true;
+  }
+  const potentiel = Math.max(0, Math.min(100, Math.round(pot)));
+  // QUALITÉ (20%) : commodités du quartier (transport, écoles, commerces, santé) — réel si dispo
+  let qualite, qualEst;
+  const Q = ctx.quartier;
+  if(Q){
+    const grade = (c, t1, t2, t3) => c >= t3 ? 95 : c >= t2 ? 75 : c >= t1 ? 55 : c > 0 ? 40 : 20;
+    const transportScore = grade(Q.transports, 1, 3, 7);
+    const shopsScore = grade(Q.commerces, 2, 8, 20);
+    const schoolsScore = Q.ecoles >= 2 ? 90 : Q.ecoles === 1 ? 70 : 35;
+    const healthScore = Q.sante >= 2 ? 90 : Q.sante === 1 ? 70 : 40;
+    qualite = Math.round(0.35*transportScore + 0.30*shopsScore + 0.20*schoolsScore + 0.15*healthScore);
+    qualEst = false;
+  } else {
+    qualite = Math.max(0, Math.min(100, Math.round(liquidity * 0.85 + 10)));
+    qualEst = true;
+  }
+
+  const total = Math.round(valeur*0.30 + risque*0.25 + potentiel*0.25 + qualite*0.20);
+
+  // ===== INSIGHTS ACTIONNABLES (décision, en euros) =====
+  if(ecartEur !== null){
+    if(deltaPct > 0.08) insights.push({sev:'bad', t:`Bien surévalué d'environ ${Math.round(deltaPct*100)} % — soit ~${fmtEur(ecartEur)} € au-dessus du marché local`});
+    else if(deltaPct < -0.08) insights.push({sev:'good', t:`Bien sous le marché d'environ ${Math.round(-deltaPct*100)} % — soit ~${fmtEur(-ecartEur)} € sous la médiane locale`});
+    else insights.push({sev:'good', t:'Prix aligné sur le marché local'});
+  } else {
+    insights.push({sev:'warn', t:'Ajoutez surface + prix demandé pour obtenir le verdict prix en euros'});
+  }
+  if(cls){
+    const yr = { G:'2025', F:'2028', E:'2034' }[cls];
+    if(yr) insights.push({sev: cls==='E' ? 'warn' : 'bad', t:`Mise en location : interdiction progressive (classe ${cls}, échéance ${yr} selon le calendrier en vigueur)`});
+  }
+  if(cls && (cls==='E'||cls==='F'||cls==='G')){
+    if(surface){
+      const lo = Math.round(surface*250/500)*500, hi = Math.round(surface*450/500)*500;
+      insights.push({sev:'warn', t:`Rénovation énergétique à prévoir : ~${fmtEur(lo)}–${fmtEur(hi)} € (hypothèse 250–450 €/m², à confirmer par devis)`});
+    } else {
+      insights.push({sev:'warn', t:'Rénovation énergétique à prévoir (~250–450 €/m², hypothèse indicative)'});
+    }
+  }
+  if(risks.inondation || (cls==='F'||cls==='G')){
+    insights.push({sev:'bad', t:'Risque de décote à la revente : élevé (cumul risque naturel / énergie)'});
+  }
+  if(trendPct !== null){
+    const pp = trendPct * 100;
+    if(pp > 1.5) insights.push({sev:'good', t:`Marché local en hausse (~${pp.toFixed(1)} %/an sur les ventes récentes) — potentiel de valorisation`});
+    else if(pp < -1.5) insights.push({sev:'bad', t:`Marché local en baisse (~${pp.toFixed(1)} %/an) — vigilance sur la revente`});
+    else insights.push({sev:'warn', t:`Marché local globalement stable (~${pp.toFixed(1)} %/an)`});
+  }
+  if(ctx.quartier){
+    const Q = ctx.quartier;
+    if(Q.transports >= 3 && Q.commerces >= 8) insights.push({sev:'good', t:`Quartier bien équipé (${Q.transports} arrêts de transport, ${Q.commerces} commerces à proximité)`});
+    else if(Q.transports === 0 && Q.commerces < 2) insights.push({sev:'warn', t:'Peu de commodités à proximité — vérifiez transports et services'});
+  }
+  if(!insights.some(i=>i.sev!=='good')) insights.push({sev:'good', t:'Aucun signal financier négatif majeur détecté'});
+
+  // ===== 2. VALORISATION & NÉGOCIATION =====
+  let valuation = null;
+  if(median){
+    const fairPpm2 = median;
+    const rangeLowPpm2 = fairPpm2 * 0.93, rangeHighPpm2 = fairPpm2 * 1.05;
+    const fairValueEur = surface ? fairPpm2 * surface : null;
+    const rangeLowEur = surface ? rangeLowPpm2 * surface : null;
+    const rangeHighEur = surface ? rangeHighPpm2 * surface : null;
+    let idealPriceEur = fairValueEur, marginEur = null, marginPct = null;
+    const negArgs = [];
+    if(prix && fairValueEur){
+      // negotiation target: fair value, or a bit below if risks/energy issues stack up
+      let discount = 0;
+      if(cls==='F'||cls==='G') { discount += 0.04; negArgs.push(`Classe énergie ${cls} : argument pour négocier le coût des travaux à venir`); }
+      if(riskPenalty > 15) { negArgs.push('Risques naturels identifiés : argument de négociation sur le prix'); }
+      if(deltaPct !== null && deltaPct > 0.05) { negArgs.push(`Prix affiché ${Math.round(deltaPct*100)} % au-dessus de la médiane locale`); }
+      if(trendPct !== null && trendPct*100 < 0) { negArgs.push('Marché local en baisse : levier de négociation supplémentaire'); }
+      idealPriceEur = fairValueEur * (1 - discount);
+      marginEur = prix - idealPriceEur;
+      marginPct = (prix - idealPriceEur) / prix;
+      if(negArgs.length === 0) negArgs.push('Aucun signal fort de négociation détecté — bien globalement conforme au marché');
+    }
+    valuation = { fairPpm2, rangeLowPpm2, rangeHighPpm2, fairValueEur, rangeLowEur, rangeHighEur, idealPriceEur, marginEur, marginPct, negArgs };
+  }
+
+  // ===== 6. ANALYSE LOCATIVE (estimation heuristique — à confirmer par données de loyers réelles) =====
+  let rental = null;
+  if(median){
+    const ppm2 = median;
+    const yieldPct = ppm2 >= 5000 ? 3.2 : ppm2 >= 3500 ? 4.0 : ppm2 >= 2500 ? 5.0 : 6.2;
+    const fairValueEur = (surface ? ppm2*surface : null) || (valuation && valuation.fairValueEur);
+    const loyerMensuel = fairValueEur ? (fairValueEur * yieldPct/100) / 12 : null;
+    const netYieldPct = yieldPct * 0.72; // charges, taxe foncière, gestion, vacance — hypothèse forfaitaire
+    const demande = liquidity >= 75 ? 'Forte' : liquidity >= 50 ? 'Modérée' : 'Faible';
+    rental = { yieldPct, netYieldPct, loyerMensuel, demande, isHeuristic:true };
+  }
+
+  // ===== Critères détaillés (7 axes, pour le rapport final) =====
+  let renta = null;
+  if(rental){
+    renta = rental.yieldPct >= 6 ? 88 : rental.yieldPct >= 4.5 ? 74 : rental.yieldPct >= 3.5 ? 58 : 42;
+  }
+  const criteres = [
+    { label:'Prix', value: valeur, note:'Positionnement vs marché local' },
+    { label:'Emplacement', value: qualite, note:'Commodités et accessibilité' },
+    { label:'Rentabilité', value: renta, note: renta!=null ? 'Estimation locative brute (heuristique)' : 'Données insuffisantes' },
+    { label:'Potentiel', value: potentiel, note:'Tendance de marché et upside' },
+    { label:'Sécurité / Risques', value: risque, note:'Risques naturels et réglementaires' },
+    { label:'Qualité du bien', value: energyScore, note: energyScore!=null ? 'Performance énergétique (DPE)' : 'Non disponible' },
+    { label:'Liquidité', value: liquidity, note:'Volume de transactions comparables' }
+  ];
+
+  // ===== Recommandation finale (5 niveaux) =====
+  const majorRedFlag = risks.inondation && (cls==='F'||cls==='G');
+  let reco;
+  if(majorRedFlag || total < 35) reco = { tier:1, emoji:'🔴', label:'À éviter', color:'#FF7A59' };
+  else if(total < 50) reco = { tier:2, emoji:'🟠', label:'Achat risqué', color:'#FF9A4D' };
+  else if(total < 65) reco = { tier:3, emoji:'🟡', label:'À négocier', color:'#FFB547' };
+  else if(total < 80) reco = { tier:4, emoji:'🟢', label:'Bon investissement', color:'#1FE0A0' };
+  else reco = { tier:5, emoji:'✅', label:'Achat fortement recommandé', color:'#1FE0A0' };
+
+  return {
+    total,
+    axes: { valeur, risque, potentiel, qualite },
+    estimated: { potentiel: potEst, qualite: qualEst },
+    insights, findings,
+    priceScore, riskScore: climat, dynScore: liquidity, energyScore,
+    valuation, rental, criteres, reco
+  };
+}
+
+function colorFor(v){ return v >= 70 ? '#1FE0A0' : v >= 45 ? '#FFB547' : '#FF7A59'; }
+
+let __map = null;
+function renderMap(ctx){
+  const el = $('mapEl'), block = $('mapBlock'), legend = $('mapLegend');
+  if(!el || !block) return;
+  if(typeof L === 'undefined'){ block.style.display = 'none'; return; }
+  if(!ctx.geo || typeof ctx.geo.lat !== 'number'){ block.style.display = 'none'; return; }
+
+  block.style.display = 'block';
+  if(__map){ __map.remove(); __map = null; }
+  el.innerHTML = '';
+
+  const lat = ctx.geo.lat, lon = ctx.geo.lon;
+  __map = L.map(el, { scrollWheelZoom: false }).setView([lat, lon], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }).addTo(__map);
+
+  const propIcon = L.divIcon({ className:'', html:'<div style="width:18px;height:18px;border-radius:50%;background:#1FE0A0;border:3px solid #0A0E14;box-shadow:0 0 0 2px #1FE0A0"></div>', iconSize:[18,18] });
+  L.marker([lat, lon], { icon: propIcon, zIndexOffset: 1000 }).addTo(__map)
+    .bindPopup('<b>Bien analysé</b><br>' + (ctx.geo.label || ''));
+
+  // ventes comparables DVF géolocalisées
+  let salesCount = 0;
+  (ctx.sales || []).forEach(s => {
+    if(typeof s.lat === 'number' && typeof s.lon === 'number'){
+      salesCount++;
+      L.circleMarker([s.lat, s.lon], { radius:6, color:'#FFB547', fillColor:'#FFB547', fillOpacity:0.8, weight:1 }).addTo(__map)
+        .bindPopup(`Vente comparable${s.year ? ' · '+s.year : ''}<br>${Math.round(s.ppm2).toLocaleString('fr-FR')} €/m²${s.surf ? ' · '+Math.round(s.surf)+' m²' : ''}`);
+    }
+  });
+
+  // commodités du quartier
+  const cats = [
+    { key:'transports', color:'#5AA9FF', label:'Transport' },
+    { key:'ecoles', color:'#B57BFF', label:'École' },
+    { key:'commerces', color:'#FF7A59', label:'Commerce' },
+    { key:'sante', color:'#1FE0A0', label:'Santé' }
+  ];
+  let anyAmenity = false;
+  const Q = ctx.quartier;
+  if(Q && Q.points){
+    cats.forEach(c => {
+      (Q.points[c.key] || []).forEach(pt => {
+        anyAmenity = true;
+        L.circleMarker([pt.lat, pt.lon], { radius:5, color:c.color, fillColor:c.color, fillOpacity:0.9, weight:1 }).addTo(__map)
+          .bindPopup(`${c.label}${pt.name ? ' · '+pt.name : ''}`);
+      });
+    });
+  }
+
+  legend.innerHTML =
+    '<span>🟢 Bien analysé</span>' +
+    (salesCount ? '<span>🟡 Ventes comparables (' + salesCount + ')</span>' : '') +
+    (anyAmenity ? cats.map(c => `<span style="color:${c.color}">● ${c.label}</span>`).join('') : '');
+
+  setTimeout(() => { if(__map) __map.invalidateSize(); }, 200);
+}
+
+function render(ctx, score){
+  $('rAddr').textContent = ctx.geo.label;
+  $('rMeta').textContent = ctx.simulated ? 'Données simulées (exemple)' : (ctx.geo.city + ' ' + (ctx.geo.postcode||''));
+
+  // recommandation finale
+  const reco = score.reco;
+  $('recoBanner').style.borderColor = reco.color + '55';
+  $('recoBanner').style.background = reco.color + '14';
+  $('recoEmoji').textContent = reco.emoji;
+  $('recoLabel').textContent = reco.label;
+  $('recoLabel').style.color = reco.color;
+  $('recoSub').textContent = `TrustScore ${score.total}/100 — recommandation indicative, ne remplace pas l'avis d'un professionnel`;
+
+  // ring
+  const col = colorFor(score.total);
+  $('ring').style.stroke = col;
+  $('scoreNum').style.color = col;
+  requestAnimationFrame(()=>{ $('ring').style.strokeDashoffset = C - (C*score.total/100); });
+  let cur=0; const step=()=>{ cur+=2; if(cur>=score.total) cur=score.total; $('scoreNum').textContent=cur; if(cur<score.total) requestAnimationFrame(step); }; step();
+  $('verdict').style.color = col;
+  $('verdict').textContent = (score.total>=70?'Bon profil' : score.total>=45?'À étudier' : 'Vigilance') + ' · TrustScore';
+
+  // subscores (4 axes pondérés)
+  const subs = [
+    ['Valeur', score.axes.valeur, '30%', false],
+    ['Risque', score.axes.risque, '25%', false],
+    ['Potentiel', score.axes.potentiel, '25%', score.estimated.potentiel],
+    ['Qualité', score.axes.qualite, '20%', true]
+  ];
+  $('subscores').innerHTML = subs.map(s=>{
+    const c = colorFor(s[1]);
+    const est = s[3] ? ' <span style="font-size:10px;color:var(--muted);font-weight:500">· estimation</span>' : '';
+    return `<div class="ss"><div class="ss-top"><span class="ss-name">${s[0]} <span style="color:var(--muted);font-weight:500;font-size:12px">(${s[2]})</span>${est}</span><span class="ss-val" style="color:${c}">${s[1]}/100</span></div><div class="bar"><i style="width:${s[1]}%;background:${c}"></i></div></div>`;
+  }).join('');
+
+  // insights actionnables
+  if($('insights')){
+    $('insights').innerHTML = score.insights.map(f=>`<div class="finding"><span class="dot ${f.sev}"></span>${f.t}</div>`).join('');
+  }
+
+  // 7 critères détaillés
+  if($('criteria')){
+    $('criteria').innerHTML = score.criteres.map(c=>{
+      if(c.value == null) return `<div class="crit-row"><span class="crit-name">${c.label}</span><span class="crit-note">${c.note}</span><div class="crit-bar"></div><span class="crit-val" style="color:var(--muted)">—</span></div>`;
+      const col = colorFor(c.value);
+      return `<div class="crit-row"><span class="crit-name">${c.label}</span><span class="crit-note">${c.note}</span><div class="crit-bar"><i style="width:${c.value}%;background:${col}"></i></div><span class="crit-val" style="color:${col}">${c.value}</span></div>`;
+    }).join('');
+  }
+
+  // valorisation & négociation
+  if($('valuation')){
+    const v = score.valuation;
+    if(v){
+      let h = '';
+      if(v.fairValueEur) h += `<div class="kv"><span class="k">Valeur estimée</span><span class="v" style="color:var(--mint);font-weight:800">${fmtEur(v.fairValueEur)} €</span></div>`;
+      else h += `<div class="kv"><span class="k">Prix médian local</span><span class="v" style="font-weight:800">${fmtEur(v.fairPpm2)} €/m²</span></div>`;
+      if(v.rangeLowEur && v.rangeHighEur) h += `<div class="kv"><span class="k">Fourchette de marché</span><span class="v">${fmtEur(v.rangeLowEur)} – ${fmtEur(v.rangeHighEur)} €</span></div>`;
+      if(v.idealPriceEur && ctx.prix){
+        h += `<div class="kv"><span class="k">Prix idéal de négociation</span><span class="v" style="color:var(--mint);font-weight:800">${fmtEur(v.idealPriceEur)} €</span></div>`;
+        h += `<div class="kv"><span class="k">Marge de négociation</span><span class="v" style="color:${v.marginEur>0?'var(--mint)':'var(--muted)'}">${v.marginEur>0? '~'+fmtEur(v.marginEur)+' € ('+Math.round(v.marginPct*100)+' %)' : 'Aucune — prix déjà favorable'}</span></div>`;
+      }
+      if(v.negArgs && v.negArgs.length){
+        h += '<div style="margin-top:10px">' + v.negArgs.map(a=>`<div class="finding"><span class="dot warn"></span>${a}</div>`).join('') + '</div>';
+      }
+      $('valuation').innerHTML = h;
+      $('valuationBlock').style.display = 'block';
+    } else {
+      $('valuation').innerHTML = '<p class="hint">Données de marché insuffisantes pour estimer une valeur.</p>';
+    }
+  }
+
+  // analyse locative (heuristique)
+  if($('rental')){
+    const rt = score.rental;
+    if(rt){
+      $('rental').innerHTML =
+        `<div class="kv"><span class="k">Loyer mensuel estimé</span><span class="v" style="color:var(--mint);font-weight:800">${rt.loyerMensuel ? '~'+fmtEur(rt.loyerMensuel)+' €' : '—'}</span></div>` +
+        `<div class="kv"><span class="k">Rendement brut</span><span class="v">~${rt.yieldPct.toFixed(1)} %</span></div>` +
+        `<div class="kv"><span class="k">Rendement net (estimation)</span><span class="v">~${rt.netYieldPct.toFixed(1)} %</span></div>` +
+        `<div class="kv"><span class="k">Demande locative</span><span class="v">${rt.demande}</span></div>` +
+        `<p class="hint" style="margin-top:8px;color:var(--amber)">⚠ Estimation grossière basée sur des paliers de prix, pas sur des loyers réels observés. À affiner avec des données de loyers (ex. carte des loyers du ministère).</p>`;
+      $('rentalBlock').style.display = 'block';
+    } else {
+      $('rental').innerHTML = '<p class="hint">Données insuffisantes pour estimer la rentabilité locative.</p>';
+    }
+  }
+
+  // market
+  const mk = [];
+  if(ctx.medianPpm2) mk.push(['Prix médian local', Math.round(ctx.medianPpm2).toLocaleString('fr-FR')+' €/m²']);
+  if(ctx.prix && ctx.surface) mk.push(['Votre prix', Math.round(ctx.prix/ctx.surface).toLocaleString('fr-FR')+' €/m²']);
+  mk.push(['Ventes comparables', ctx.sales.length]);
+  if(ctx.surface && ctx.medianPpm2) mk.push(['Estimation marché', Math.round(ctx.medianPpm2*ctx.surface).toLocaleString('fr-FR')+' €']);
+  $('market').innerHTML = (mk.map(r=>`<div class="kv"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('') || '<div class="kv"><span class="k">Données indisponibles</span></div>')
+    + (ctx.dvfUnavailable ? '<p class="hint" style="margin-top:8px;color:var(--amber)">⚠ Source de prix (DVF) momentanément indisponible — les autres analyses restent valides.</p>' : '');
+
+  // risks
+  const rl = ctx.riskList || [];
+  $('risks').innerHTML = rl.length
+    ? rl.map(r=>`<div class="finding"><span class="dot ${r.sev}"></span>${r.label}</div>`).join('')
+    : '<div class="finding"><span class="dot good"></span>Aucun risque majeur signalé</div>';
+
+  // energy (DPE)
+  const e = ctx.energy;
+  if(e && e.cls){
+    const ec = { A:'#1FE0A0', B:'#5BD17A', C:'#A6D04E', D:'#FFB547', E:'#FF9A4D', F:'#FF7A59', G:'#E5484D' };
+    $('energy').innerHTML =
+      `<div class="kv"><span class="k">Classe énergie</span><span class="v" style="color:${ec[e.cls]||'#fff'};font-weight:800;font-size:16px">${e.cls}</span></div>` +
+      (e.ges ? `<div class="kv"><span class="k">Émissions GES</span><span class="v">${e.ges}</span></div>` : '') +
+      (e.date ? `<div class="kv"><span class="k">Date du DPE</span><span class="v">${e.date}</span></div>` : '') +
+      (e.distance != null ? `<div class="kv"><span class="k">Distance du DPE déclaré</span><span class="v">~${Math.round(e.distance)} m</span></div>` : '') +
+      `<p class="hint" style="margin-top:8px">DPE déclaré le plus proche trouvé — peut concerner un logement voisin du même secteur.</p>`;
+    $('energyBlock').style.display = 'block';
+  } else {
+    $('energyBlock').style.display = 'none';
+  }
+
+  // trend & comparables
+  if($('trend')){
+    const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '—';
+    const comps = (ctx.sales || []).filter(s => s.ppm2 && s.year).sort((a,b)=>b.year-a.year).slice(0,6);
+    let h = '';
+    if(ctx.trendPct != null){
+      const pp = ctx.trendPct * 100;
+      const tc = colorFor(pp > 1.5 ? 80 : pp < -1.5 ? 30 : 55);
+      h += `<div class="kv"><span class="k">Tendance des prix (ventes récentes)</span><span class="v" style="color:${tc};font-weight:800">${pp>0?'+':''}${pp.toFixed(1)} %/an</span></div>`;
+    } else {
+      h += `<div class="kv"><span class="k">Tendance des prix</span><span class="v">Données insuffisantes</span></div>`;
+    }
+    if(comps.length){
+      h += '<div style="margin-top:10px">' + comps.map(s =>
+        `<div class="finding"><span class="dot good"></span>${s.year || '—'} · ${cap(s.type)} ${s.surf ? Math.round(s.surf)+' m²' : ''} · <strong style="color:#F7F5EF">${Math.round(s.ppm2).toLocaleString('fr-FR')} €/m²</strong></div>`
+      ).join('') + '</div>';
+      h += '<p class="hint" style="margin-top:8px">Ventes réelles déclarées à proximité (DVF). La tendance est indicative et dépend du nombre de transactions disponibles.</p>';
+    }
+    $('trend').innerHTML = h;
+    $('trendBlock').style.display = (ctx.trendPct != null || comps.length) ? 'block' : 'none';
+  }
+
+  // quartier
+  if($('quartier')){
+    const Q = ctx.quartier;
+    if(Q){
+      const row = (k, v) => `<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+      $('quartier').innerHTML =
+        row('Transports à proximité', Q.transports) +
+        row('Commerces', Q.commerces) +
+        row('Écoles', Q.ecoles) +
+        row('Santé (pharmacie, médecin…)', Q.sante) +
+        `<p class="hint" style="margin-top:8px">Commodités dans un rayon de ~800 m (OpenStreetMap).</p>`;
+      $('quartierBlock').style.display = 'block';
+    } else {
+      $('quartierBlock').style.display = 'none';
+    }
+  }
+
+  // carte interactive
+  renderMap(ctx);
+
+  // findings
+  $('findings').innerHTML = score.findings.map(f=>`<div class="finding"><span class="dot ${f.sev}"></span>${f.t}</div>`).join('')
+    || '<div class="finding"><span class="dot good"></span>Aucun point d\'attention particulier</div>';
+
+  $('results').classList.add('show');
+  $('results').scrollIntoView({behavior:'smooth', block:'start'});
+
+  // payload for the AI report
+  window.__lastCtx = ctx;
+  if(typeof chatHistory !== 'undefined'){ chatHistory.length = 0; }
+  if($('chatLog')) $('chatLog').innerHTML = '';
+  window.__lastScore = score;
+  window.__lastPayload = {
+    adresse: ctx.geo.label,
+    commune: ctx.geo.city, codePostal: ctx.geo.postcode,
+    donneesSimulees: !!ctx.simulated,
+    propertyScore: score.total,
+    verdict: $('verdict').textContent,
+    axes: score.axes,
+    criteresDetailles: score.criteres,
+    recommandationFinale: score.reco.label,
+    valorisationEtNegociation: score.valuation,
+    analyseLocativeEstimee: score.rental,
+    insightsCles: score.insights.map(i => i.t),
+    sousScores: { positionnementPrix: score.priceScore, niveauRisque: score.riskScore, dynamiqueMarche: score.dynScore },
+    prixMedianLocalEurM2: ctx.medianPpm2 ? Math.round(ctx.medianPpm2) : null,
+    prixDemandeEurM2: (ctx.prix && ctx.surface) ? Math.round(ctx.prix/ctx.surface) : null,
+    surfaceM2: ctx.surface || null,
+    prixDemandeEur: ctx.prix || null,
+    ventesComparables: ctx.sales.length,
+    risques: (ctx.riskList || []).map(r => r.label),
+    pointsAttention: score.findings.map(f => f.t)
+  };
+  // reset report panel for the new analysis
+  $('reportBody').innerHTML = '<button class="btn" id="genReport" style="width:auto;padding:12px 22px">Générer le rapport IA →</button><p class="hint" style="margin-top:10px">Rédige un rapport en langage naturel à partir des données ci-dessus. Nécessite la fonction « report » déployée et une clé API configurée dans Netlify.</p>';
+  bindReportButton();
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function renderReport(txt){
+  const html = escapeHtml(txt)
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#F7F5EF">$1</strong>')
+    .replace(/\n{2,}/g, '</p><p style="margin-top:10px">')
+    .replace(/\n/g, '<br>');
+  return '<div style="font-size:14.5px;color:var(--paper-2);line-height:1.6"><p>' + html + '</p></div>';
+}
+async function generateReport(){
+  if(!window.__lastPayload) return;
+  const body = $('reportBody');
+  body.innerHTML = '<div class="loader show" style="margin-top:0"><div class="spinner"></div>Rédaction du rapport par l\'IA…</div>';
+  try{
+    const r = await fetch('/.netlify/functions/report', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(window.__lastPayload)
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    body.innerHTML = renderReport(j.report || 'Aucun contenu généré.');
+  }catch(e){
+    body.innerHTML = '<p style="color:var(--amber);font-size:14px">Rapport IA indisponible : ' + escapeHtml(e.message || String(e)) +
+      '.<br>Vérifiez que la fonction « report » est déployée et que la clé <b>ANTHROPIC_API_KEY</b> est définie dans Netlify (Site configuration → Environment variables).</p>';
+  }
+}
+function bindReportButton(){
+  const b = $('genReport');
+  if(b) b.addEventListener('click', generateReport);
+}
+
+// Labeled example used only if live APIs are unreachable (clearly flagged)
+function simulatedContext(geo, prix, surface){
+  const sales = Array.from({length:24}, (_,i)=>({ ppm2:3600 + i*22 + Math.random()*180, surf:55 + (i%4)*9, type:'appartement', year: 2021 + (i%4) }));
+  return {
+    geo, prix, surface, simulated:true, sales,
+    medianPpm2: median(sales.map(s=>s.ppm2)),
+    risks: { argile:true, radon:false, inondation:false, sismique:true, mvt:false },
+    energy: { cls:'D', ges:'D', date:'2023-05-10', distance:35 },
+    quartier: { transports:6, ecoles:3, commerces:14, sante:4, total:27 }
+  };
+}
+
+async function runAnalysis(addr, prix, surface){
+  if(!addr){ setBanner('err','Veuillez saisir une adresse.'); return; }
+
+  setBanner('', '');
+  $('results').classList.remove('show');
+  $('loader').classList.add('show');
+  $('go').disabled = true;
+
+  let ctx = null, usedSim = false;
+  try{
+    const geo = await geocode(addr); // BAN: works client-side
+    let sales = [], dvfUnavailable = false, risks = {};
+    try { const dvf = await fetchDVF(geo.lat, geo.lon); sales = dvf.sales; dvfUnavailable = dvf.unavailable; }
+    catch(e){ console.warn('DVF indisponible (CORS/réseau) :', e); dvfUnavailable = true; }
+    try {
+      const rr = await fetchRisks(geo.lat, geo.lon);
+      const txt = JSON.stringify(rr).toLowerCase();
+      risks = {
+        inondation: txt.includes('inondation'),
+        argile: txt.includes('argile') || txt.includes('retrait'),
+        sismique: txt.includes('sismi'),
+        radon: txt.includes('radon'),
+        mvt: txt.includes('mouvement de terrain') || txt.includes('mvt')
+      };
+    } catch(e){ console.warn('Géorisques indisponible (CORS/réseau) :', e); }
+
+    let energy = null;
+    try { energy = await fetchDPE(geo.lat, geo.lon); }
+    catch(e){ console.warn('DPE indisponible (CORS/réseau) :', e); }
+
+    let quartier = null;
+    try { quartier = await fetchQuartier(geo.lat, geo.lon); }
+    catch(e){ console.warn('Quartier indisponible (CORS/réseau) :', e); }
+
+    const medianPpm2 = median(sales.map(s=>s.ppm2));
+    const anyData = sales.length || Object.keys(risks).length || quartier || energy;
+    if(!anyData){
+      // échec total (probablement test en local / fonctions absentes) -> exemple étiqueté
+      ctx = simulatedContext(geo, prix, surface); usedSim = true;
+    } else {
+      ctx = { geo, prix, surface, sales, risks, medianPpm2, energy, quartier, dvfUnavailable, simulated:false };
+    }
+  } catch(e){
+    $('loader').classList.remove('show'); $('go').disabled = false;
+    setBanner('err', 'Impossible de géocoder cette adresse. Vérifiez la saisie.');
+    return;
+  }
+
+  if(usedSim){
+    setBanner('sim', '⚠ Les données ouvertes (DVF, Géorisques) ne sont pas accessibles depuis le navigateur ici — résultat affiché à titre d\'exemple. En production, un mini-proxy serveur (Netlify Function) règle ce point.');
+  }
+
+  const score = buildScore(ctx);
+  $('loader').classList.remove('show'); $('go').disabled = false;
+  render(ctx, score);
+}
+
+function isUrl(v){ return /^https?:\/\/\S+/i.test(v.trim()); }
+
+$('go').addEventListener('click', () => {
+  const addr = $('addr').value.trim();
+  const prix = parseFloat($('prix').value) || null;
+  const surface = parseFloat($('surface').value) || null;
+
+  if(!addr){ setBanner('err','Veuillez saisir un lien ou une adresse.'); return; }
+
+  if(isUrl(addr)){
+    setBanner('sim', "⚠ Un lien ne peut pas être ouvert automatiquement (CGU des portails immobiliers). Copiez-collez le texte de l'annonce dans le champ ci-dessous, l'IA en extraira l'adresse et le prix.");
+    const panel = $('pasteAdPanel');
+    if(panel){ panel.scrollIntoView({behavior:'smooth', block:'center'}); $('adText').focus(); }
+    return;
+  }
+
+  runAnalysis(addr, prix, surface);
+});
+
+$('addr').addEventListener('keydown', e=>{ if(e.key==='Enter') $('go').click(); });
+bindReportButton();
+
+// ===== Coller une annonce : extraction IA -> préremplissage -> analyse =====
+if($('extractBtn')){
+  $('extractBtn').addEventListener('click', async () => {
+    const text = ($('adText').value || '').trim();
+    const banner = $('extractBanner');
+    banner.className = 'note-banner';
+    if(text.length < 30){
+      banner.className = 'note-banner err'; banner.textContent = 'Collez un texte d\'annonce plus complet (titre, description, prix…).';
+      return;
+    }
+    const btn = $('extractBtn');
+    btn.disabled = true; btn.textContent = 'Extraction en cours…';
+    try{
+      const r = await fetch('/.netlify/functions/extract-listing', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text })
+      });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+
+      const addrGuess = j.adresseTexte || [j.ville, j.codePostal].filter(Boolean).join(' ');
+      if(!addrGuess){
+        banner.className = 'note-banner err';
+        banner.textContent = 'Localisation introuvable dans ce texte — précisez la ville ou le code postal, ou utilisez la saisie manuelle ci-dessous.';
+        btn.disabled = false; btn.textContent = 'Extraire et analyser →';
+        return;
+      }
+      $('addr').value = addrGuess;
+      if(j.prix) $('prix').value = Math.round(j.prix);
+      if(j.surface) $('surface').value = Math.round(j.surface);
+
+      if(j.confiance === 'basse'){
+        banner.className = 'note-banner sim';
+        banner.textContent = `⚠ Localisation peu certaine (« ${addrGuess} ») — vérifiez le champ adresse ci-dessous avant de continuer.`;
+      } else {
+        banner.className = '';
+        banner.textContent = '';
+      }
+
+      // ajoute aussi le texte de l'annonce au dossier de due diligence, pour la lecture croisée
+      if(typeof ddDocs !== 'undefined'){
+        ddDocs.push({ label: 'Annonce collée', text, source: 'listing' });
+        if(typeof ddRenderList === 'function') ddRenderList();
+      }
+
+      await runAnalysis($('addr').value.trim(), j.prix || null, j.surface || null);
+    } catch(err){
+      banner.className = 'note-banner err';
+      banner.textContent = 'Extraction indisponible : ' + (err.message || err) + '. Vérifiez que la fonction « extract-listing » est déployée et que ANTHROPIC_API_KEY est configurée.';
+    }
+    btn.disabled = false; btn.textContent = 'Extraire et analyser →';
+  });
+}
+
+
+// ===== Dossier de due diligence : upload/paste documents + analyse croisée =====
+const ddDocs = []; // { label, text, source }
+
+function ddRenderList(){
+  const el = $('ddList');
+  if(!el) return;
+  el.innerHTML = ddDocs.map((d,i) =>
+    `<div class="dd-item"><span class="name">📄 ${escapeHtml(d.label)}</span><span class="status">${d.text.length.toLocaleString('fr-FR')} caractères</span><button class="rm" type="button" data-i="${i}" title="Retirer">✕</button></div>`
+  ).join('');
+  el.querySelectorAll('.rm').forEach(btn => btn.addEventListener('click', () => {
+    ddDocs.splice(+btn.dataset.i, 1);
+    ddRenderList();
+    ddUpdateButton();
+  }));
+  ddUpdateButton();
+}
+function ddUpdateButton(){
+  const btn = $('ddAnalyze');
+  if(btn) btn.disabled = ddDocs.length === 0;
+}
+
+async function extractPdfText(file){
+  if(typeof pdfjsLib === 'undefined'){
+    throw new Error("La bibliothèque de lecture PDF n'a pas pu se charger (connexion réseau ?).");
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = '';
+  const maxPages = Math.min(pdf.numPages, 25);
+  for(let p = 1; p <= maxPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    text += content.items.map(it => it.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
+if($('ddAddBtn')){
+  $('ddAddBtn').addEventListener('click', () => $('ddFiles').click());
+  $('ddFiles').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    for(const file of files){
+      try{
+        let text = '';
+        if(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')){
+          text = await extractPdfText(file);
+        } else {
+          text = await file.text();
+        }
+        if(!text || text.length < 20){
+          setBanner('err', `« ${file.name} » semble vide ou illisible (scan sans texte reconnaissable ?).`);
+          continue;
+        }
+        ddDocs.push({ label: file.name, text, source: 'file' });
+      } catch(err){
+        setBanner('err', `Impossible de lire « ${file.name} » : ${err.message || err}`);
+      }
+    }
+    e.target.value = '';
+    ddRenderList();
+  });
+}
+
+if($('ddAddPaste')){
+  $('ddAddPaste').addEventListener('click', () => {
+    const label = ($('ddPasteLabel').value || 'Document collé').trim();
+    const text = ($('ddPasteText').value || '').trim();
+    if(text.length < 20){ setBanner('err', 'Collez un texte plus complet avant de l\'ajouter.'); return; }
+    ddDocs.push({ label, text, source: 'paste' });
+    $('ddPasteLabel').value = ''; $('ddPasteText').value = '';
+    ddRenderList();
+  });
+}
+
+if($('ddAnalyze')){
+  $('ddAnalyze').addEventListener('click', async () => {
+    if(!ddDocs.length) return;
+    const btn = $('ddAnalyze'), out = $('ddResult');
+    btn.disabled = true; btn.textContent = 'Analyse en cours…';
+    out.innerHTML = '<div class="loader show" style="margin-top:0"><div class="spinner"></div>Lecture croisée des documents…</div>';
+    try{
+      const r = await fetch('/.netlify/functions/document-analysis', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          documents: ddDocs.map(d => ({ label: d.label, text: d.text })),
+          contexteAnalyse: window.__lastPayload || null
+        })
+      });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      out.innerHTML = '<div class="dd-report">' + renderReport(j.analysis || 'Aucun contenu généré.') + '</div>';
+    } catch(err){
+      out.innerHTML = '<p style="color:var(--amber);font-size:14px">Analyse indisponible : ' + escapeHtml(err.message || String(err)) +
+        '.<br>Vérifiez que la fonction « document-analysis » est déployée et que <b>ANTHROPIC_API_KEY</b> est bien configurée dans Netlify.</p>';
+    }
+    btn.disabled = false; btn.textContent = 'Analyser les documents →';
+  });
+}
+
+// ===== Export PDF du rapport =====
+function exportPdf(){
+  const ctx = window.__lastCtx, score = window.__lastScore;
+  if(!ctx || !score){ return; }
+  if(typeof window.jspdf === 'undefined'){
+    alert("Le générateur PDF n'a pas pu se charger (connexion réseau ?). Réessayez dans quelques instants.");
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth(), marginX = 46;
+  let y = 56;
+  const mint = [15,179,126], ink = [16,22,31], muted = [110,118,130], coral=[255,122,89];
+
+  function checkPage(extra){ if(y + extra > 780){ doc.addPage(); y = 56; } }
+  function h1(t){ checkPage(30); doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...ink); doc.text(t, marginX, y); y += 24; }
+  function h2(t){ checkPage(24); doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(15,140,100); doc.text(t, marginX, y); y += 18; }
+  function p(t, opts){ 
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...(opts&&opts.color||ink));
+    const lines = doc.splitTextToSize(String(t), pageW - marginX*2);
+    checkPage(lines.length*13 + 4);
+    doc.text(lines, marginX, y); y += lines.length*13 + 6;
+  }
+  function kv(k,v){ checkPage(15); doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...ink); doc.text(String(k)+' :', marginX, y);
+    doc.setFont('helvetica','normal'); doc.text(String(v), marginX+180, y); y += 15; }
+  function rule(){ checkPage(10); doc.setDrawColor(225,225,225); doc.line(marginX, y, pageW-marginX, y); y += 12; }
+
+  // Header
+  doc.setFillColor(16,22,31); doc.rect(0,0,pageW,64,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
+  doc.text('TrustEstate', marginX, 40);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(200,200,200);
+  doc.text("Rapport d'analyse — document indicatif, ne remplace pas une expertise professionnelle", marginX, 54);
+  y = 90;
+
+  h1(ctx.geo.label || 'Adresse non renseignée');
+  p((ctx.geo.city||'') + ' ' + (ctx.geo.postcode||'') + (ctx.simulated ? '  —  DONNÉES SIMULÉES (exemple)' : ''), {color: ctx.simulated?coral:muted});
+  y += 4;
+
+  // Recommandation
+  h2('Recommandation finale');
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...ink);
+  checkPage(20); doc.text(score.reco.emoji + '  ' + score.reco.label, marginX, y); y += 16;
+  kv('TrustScore global', score.total + ' / 100');
+  y += 6; rule();
+
+  // Axes
+  h2('Score par axe (pondéré)');
+  kv('Valeur (30%)', score.axes.valeur + '/100');
+  kv('Risque (25%)', score.axes.risque + '/100');
+  kv('Potentiel (25%)' + (score.estimated.potentiel?' — estimation':''), score.axes.potentiel + '/100');
+  kv('Qualité (20%)' + (score.estimated.qualite?' — estimation':''), score.axes.qualite + '/100');
+  y += 6; rule();
+
+  // Critères détaillés
+  h2('Score détaillé par critère');
+  score.criteres.forEach(c => kv(c.label, c.value!=null ? c.value+'/100' : '—'));
+  y += 6; rule();
+
+  // Valorisation
+  if(score.valuation){
+    const v = score.valuation;
+    h2('Valorisation & négociation');
+    if(v.fairValueEur) kv('Valeur estimée', fmtEur(v.fairValueEur)+' €');
+    else kv('Prix médian local', fmtEur(v.fairPpm2)+' €/m²');
+    if(v.rangeLowEur && v.rangeHighEur) kv('Fourchette de marché', fmtEur(v.rangeLowEur)+' – '+fmtEur(v.rangeHighEur)+' €');
+    if(v.idealPriceEur && ctx.prix){
+      kv('Prix idéal de négociation', fmtEur(v.idealPriceEur)+' €');
+      kv('Marge de négociation', v.marginEur>0 ? '~'+fmtEur(v.marginEur)+' € ('+Math.round(v.marginPct*100)+' %)' : 'Aucune');
+    }
+    if(v.negArgs && v.negArgs.length){ y+=2; v.negArgs.forEach(a => p('• '+a)); }
+    y += 4; rule();
+  }
+
+  // Locatif
+  if(score.rental){
+    const rt = score.rental;
+    h2('Analyse locative (estimation)');
+    kv('Loyer mensuel estimé', rt.loyerMensuel ? '~'+fmtEur(rt.loyerMensuel)+' €' : '—');
+    kv('Rendement brut', '~'+rt.yieldPct.toFixed(1)+' %');
+    kv('Rendement net (estimation)', '~'+rt.netYieldPct.toFixed(1)+' %');
+    kv('Demande locative', rt.demande);
+    p('Estimation grossière par paliers de prix, à affiner avec des données de loyers réelles.', {color:muted});
+    y += 2; rule();
+  }
+
+  // Insights
+  h2('Insights actionnables');
+  score.insights.forEach(i => p('• '+i.t));
+  y += 4; rule();
+
+  // Risques
+  h2('Risques identifiés');
+  const rl = ctx.riskList || [];
+  if(rl.length) rl.forEach(r => p('• '+r.label)); else p('Aucun risque naturel majeur signalé.');
+  y += 4; rule();
+
+  // Points d'attention
+  h2("Points d'attention");
+  score.findings.forEach(f => p('• '+f.t));
+
+  // Footer note
+  checkPage(30);
+  y += 10; doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+  doc.text('Généré par TrustEstate à partir de données publiques (Base Adresse Nationale, DVF Etalab, Géorisques, DPE ADEME, OpenStreetMap).', marginX, y, {maxWidth: pageW-marginX*2});
+  y += 12;
+  doc.text('Analyse indicative, sans valeur d\'expertise. Ne remplace pas l\'avis d\'un professionnel.', marginX, y);
+
+  const filename = 'TrustEstate_' + (ctx.geo.city || 'rapport').replace(/[^a-z0-9]+/gi,'_') + '.pdf';
+  doc.save(filename);
+}
+if($('pdfBtn')) $('pdfBtn').addEventListener('click', exportPdf);
+
+// ===== Assistant IA conversationnel (Phase 4) =====
+const chatHistory = []; // { role, content }
+
+function chatAppend(role, text){
+  const log = $('chatLog');
+  if(!log) return;
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function sendChat(){
+  const input = $('chatInput');
+  const q = (input.value || '').trim();
+  if(!q) return;
+  if(!window.__lastPayload){
+    chatAppend('err', "Lancez d'abord une analyse (adresse ou annonce) avant de poser une question sur un bien.");
+    return;
+  }
+  chatAppend('user', q);
+  input.value = '';
+  const btn = $('chatSend'); btn.disabled = true;
+  const thinkingId = 'thinking-' + Date.now();
+  const log = $('chatLog');
+  const thinking = document.createElement('div');
+  thinking.className = 'chat-msg bot'; thinking.id = thinkingId; thinking.textContent = '…';
+  log.appendChild(thinking); log.scrollTop = log.scrollHeight;
+
+  try{
+    const r = await fetch('/.netlify/functions/ask', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ question: q, contexteAnalyse: window.__lastPayload, history: chatHistory })
+    });
+    const j = await r.json().catch(()=>({}));
+    document.getElementById(thinkingId)?.remove();
+    if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    chatAppend('bot', j.answer || 'Aucune réponse générée.');
+    chatHistory.push({ role:'user', content:q }, { role:'assistant', content:j.answer || '' });
+  } catch(err){
+    document.getElementById(thinkingId)?.remove();
+    chatAppend('err', 'Assistant indisponible : ' + (err.message || err) + '. Vérifiez que la fonction « ask » est déployée et que ANTHROPIC_API_KEY est configurée.');
+  }
+  btn.disabled = false;
+}
+
+if($('chatSend')) $('chatSend').addEventListener('click', sendChat);
+if($('chatInput')) $('chatInput').addEventListener('keydown', e => { if(e.key === 'Enter') sendChat(); });
+
+// Contact form -> Netlify Forms
+const cForm = $('contactForm');
+if(cForm){
+  cForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const data = new FormData(cForm);
+    try{
+      await fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams(data).toString() });
+    }catch(err){ /* en aperçu hors Netlify : on confirme quand même */ }
+    cForm.style.display = 'none';
+    $('contactSuccess').classList.add('show');
+  });
+}
+</script>
+</body>
+</html>
