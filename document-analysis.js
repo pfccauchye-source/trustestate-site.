@@ -1,45 +1,82 @@
-// netlify/functions/quartier.js
-// Compte les commodités autour d'un point (transports, écoles, commerces, santé)
-// via l'API Overpass d'OpenStreetMap. Sert de base à l'axe "Qualité / emplacement".
-exports.handler = async (event) => {
-  const q = event.queryStringParameters || {};
-  const { lat, lon, r = "800" } = q;
-  if (!lat || !lon) return resp(400, { error: "Paramètres lat & lon requis" });
+// netlify/functions/document-analysis.js
+// Reçoit le TEXTE déjà extrait de documents fournis par le vendeur (DPE officiel, diagnostics,
+// compromis, PV de copropriété...) ainsi que l'analyse en données ouvertes déjà calculée (TrustScore),
+// et demande à Claude de produire une lecture croisée : cohérences, incohérences, informations nouvelles,
+// alertes. Rien n'est stocké côté serveur : le texte transite, est envoyé à l'API, puis la fonction répond.
+//
+// Nécessite ANTHROPIC_API_KEY (même variable que la fonction "report").
 
-  const query = `[out:json][timeout:25];
-(
-  node[amenity=school](around:${r},${lat},${lon});
-  node[public_transport=stop_position](around:${r},${lat},${lon});
-  node[highway=bus_stop](around:${r},${lat},${lon});
-  node[railway=station](around:${r},${lat},${lon});
-  node[shop](around:${r},${lat},${lon});
-  node[amenity~"pharmacy|doctors|hospital"](around:${r},${lat},${lon});
-);
-out body;`;
+const MODEL = "claude-sonnet-4-6";
+
+exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return resp(204, "");
+  if (event.httpMethod !== "POST") return resp(405, { error: "Méthode non autorisée" });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return resp(500, { error: "Clé API absente : définissez ANTHROPIC_API_KEY dans Netlify." });
+
+  let d;
+  try { d = JSON.parse(event.body || "{}"); }
+  catch { return resp(400, { error: "Corps de requête invalide" }); }
+
+  const documents = Array.isArray(d.documents) ? d.documents : [];
+  if (!documents.length) return resp(400, { error: "Aucun document fourni" });
+
+  // Garde-fou simple : limiter le volume de texte envoyé (coût + fiabilité)
+  const MAX_CHARS_PER_DOC = 12000;
+  const docsForPrompt = documents.slice(0, 6).map((doc, i) => {
+    const label = (doc.label || `Document ${i + 1}`).slice(0, 120);
+    const text = String(doc.text || "").slice(0, MAX_CHARS_PER_DOC);
+    return `--- ${label} ---\n${text}`;
+  }).join("\n\n");
+
+  const contexteAnalyse = d.contexteAnalyse ? JSON.stringify(d.contexteAnalyse, null, 2) : "Non fourni.";
+
+  const system =
+    "Tu es l'analyste due diligence de TrustEstate. Ta mission : croiser le contenu des documents fournis " +
+    "par le vendeur (extraits en texte brut, potentiellement imparfaits car issus d'une extraction PDF) avec " +
+    "l'analyse déjà réalisée à partir de données publiques ouvertes (DVF, Géorisques, DPE, quartier), fournie en JSON. " +
+    "Règles strictes : n'invente rien qui ne figure pas dans les documents ou le JSON fourni. Si un document est illisible, " +
+    "incomplet, ou ne correspond pas à un type de document immobilier reconnaissable, dis-le explicitement plutôt que " +
+    "de deviner. Distingue clairement trois catégories dans ta réponse : " +
+    "1) COHÉRENCES — ce que les documents confirment par rapport à l'analyse en données ouvertes ; " +
+    "2) INCOHÉRENCES OU ÉCARTS — ce que les documents contredisent ou nuancent (ex. DPE officiel différent de l'estimation, " +
+    "surface différente, travaux mentionnés non visibles dans les données publiques) ; " +
+    "3) INFORMATIONS NOUVELLES — ce que les documents apportent que les données ouvertes ne pouvaient pas savoir " +
+    "(procédures de copropriété, litiges, servitudes, historique de travaux, clauses particulières). " +
+    "Termine par une liste de POINTS DE VIGILANCE À VÉRIFIER AVANT ACHAT (questions concrètes à poser au vendeur ou au notaire). " +
+    "Reste factuel, neutre, en français, sans mise en forme Markdown complexe. Rappelle en une phrase que ce rapport " +
+    "est une aide à la décision et ne remplace pas un avis notarial ou une expertise professionnelle.";
+
+  const userMsg =
+    "ANALYSE EN DONNÉES OUVERTES DÉJÀ CALCULÉE (JSON) :\n" + contexteAnalyse +
+    "\n\nDOCUMENTS FOURNIS PAR LE VENDEUR (texte extrait) :\n" + docsForPrompt +
+    "\n\nProduis l'analyse croisée selon les règles définies.";
 
   try {
-    const r2 = await fetch("https://overpass-api.de/api/interpreter", {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "data=" + encodeURIComponent(query)
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1400,
+        system,
+        messages: [{ role: "user", content: userMsg }]
+      })
     });
-    if (!r2.ok) return resp(502, { error: "Overpass indisponible", status: r2.status });
-    const data = await r2.json();
-    const els = data.elements || [];
-    let transports = 0, ecoles = 0, commerces = 0, sante = 0;
-    const points = { transports: [], ecoles: [], commerces: [], sante: [] };
-    const cap = 12;
-    els.forEach(e => {
-      const t = e.tags || {};
-      const pt = (typeof e.lat === "number" && typeof e.lon === "number") ? { lat: e.lat, lon: e.lon, name: t.name || null } : null;
-      if (t.amenity === "school") { ecoles++; if (pt && points.ecoles.length < cap) points.ecoles.push(pt); }
-      else if (t.public_transport === "stop_position" || t.highway === "bus_stop" || t.railway === "station") { transports++; if (pt && points.transports.length < cap) points.transports.push(pt); }
-      else if (t.shop) { commerces++; if (pt && points.commerces.length < cap) points.commerces.push(pt); }
-      else if (["pharmacy", "doctors", "hospital"].includes(t.amenity)) { sante++; if (pt && points.sante.length < cap) points.sante.push(pt); }
-    });
-    return resp(200, { transports, ecoles, commerces, sante, total: els.length, points });
+    if (!r.ok) {
+      const detail = await r.text();
+      return resp(502, { error: "Erreur API Claude", status: r.status, detail: detail.slice(0, 300) });
+    }
+    const j = await r.json();
+    const text = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+    return resp(200, { analysis: text || "Aucun contenu généré." });
   } catch (e) {
-    return resp(502, { error: "Erreur Overpass", detail: String(e) });
+    return resp(502, { error: "Appel au modèle impossible", detail: String(e) });
   }
 };
 
@@ -49,8 +86,9 @@ function resp(statusCode, body) {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "public, max-age=86400"
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
     },
-    body: JSON.stringify(body)
+    body: typeof body === "string" ? body : JSON.stringify(body)
   };
 }

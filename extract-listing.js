@@ -1,10 +1,8 @@
-// netlify/functions/document-analysis.js
-// Reçoit le TEXTE déjà extrait de documents fournis par le vendeur (DPE officiel, diagnostics,
-// compromis, PV de copropriété...) ainsi que l'analyse en données ouvertes déjà calculée (TrustScore),
-// et demande à Claude de produire une lecture croisée : cohérences, incohérences, informations nouvelles,
-// alertes. Rien n'est stocké côté serveur : le texte transite, est envoyé à l'API, puis la fonction répond.
-//
-// Nécessite ANTHROPIC_API_KEY (même variable que la fonction "report").
+// netlify/functions/extract-listing.js
+// Reçoit le TEXTE d'une annonce collé par l'utilisateur (pas d'URL récupérée automatiquement :
+// SeLoger/Leboncoin/Bien'ici interdisent le scraping dans leurs CGU et le bloquent techniquement).
+// Demande à Claude d'en extraire les champs structurés utiles à l'analyse : adresse, prix, surface, etc.
+// Répond en JSON strict, sans invention : les champs absents du texte sont renvoyés à null.
 
 const MODEL = "claude-sonnet-4-6";
 
@@ -19,39 +17,19 @@ exports.handler = async (event) => {
   try { d = JSON.parse(event.body || "{}"); }
   catch { return resp(400, { error: "Corps de requête invalide" }); }
 
-  const documents = Array.isArray(d.documents) ? d.documents : [];
-  if (!documents.length) return resp(400, { error: "Aucun document fourni" });
-
-  // Garde-fou simple : limiter le volume de texte envoyé (coût + fiabilité)
-  const MAX_CHARS_PER_DOC = 12000;
-  const docsForPrompt = documents.slice(0, 6).map((doc, i) => {
-    const label = (doc.label || `Document ${i + 1}`).slice(0, 120);
-    const text = String(doc.text || "").slice(0, MAX_CHARS_PER_DOC);
-    return `--- ${label} ---\n${text}`;
-  }).join("\n\n");
-
-  const contexteAnalyse = d.contexteAnalyse ? JSON.stringify(d.contexteAnalyse, null, 2) : "Non fourni.";
+  const text = String(d.text || "").slice(0, 15000);
+  if (text.trim().length < 30) return resp(400, { error: "Texte d'annonce trop court ou vide." });
 
   const system =
-    "Tu es l'analyste due diligence de TrustEstate. Ta mission : croiser le contenu des documents fournis " +
-    "par le vendeur (extraits en texte brut, potentiellement imparfaits car issus d'une extraction PDF) avec " +
-    "l'analyse déjà réalisée à partir de données publiques ouvertes (DVF, Géorisques, DPE, quartier), fournie en JSON. " +
-    "Règles strictes : n'invente rien qui ne figure pas dans les documents ou le JSON fourni. Si un document est illisible, " +
-    "incomplet, ou ne correspond pas à un type de document immobilier reconnaissable, dis-le explicitement plutôt que " +
-    "de deviner. Distingue clairement trois catégories dans ta réponse : " +
-    "1) COHÉRENCES — ce que les documents confirment par rapport à l'analyse en données ouvertes ; " +
-    "2) INCOHÉRENCES OU ÉCARTS — ce que les documents contredisent ou nuancent (ex. DPE officiel différent de l'estimation, " +
-    "surface différente, travaux mentionnés non visibles dans les données publiques) ; " +
-    "3) INFORMATIONS NOUVELLES — ce que les documents apportent que les données ouvertes ne pouvaient pas savoir " +
-    "(procédures de copropriété, litiges, servitudes, historique de travaux, clauses particulières). " +
-    "Termine par une liste de POINTS DE VIGILANCE À VÉRIFIER AVANT ACHAT (questions concrètes à poser au vendeur ou au notaire). " +
-    "Reste factuel, neutre, en français, sans mise en forme Markdown complexe. Rappelle en une phrase que ce rapport " +
-    "est une aide à la décision et ne remplace pas un avis notarial ou une expertise professionnelle.";
-
-  const userMsg =
-    "ANALYSE EN DONNÉES OUVERTES DÉJÀ CALCULÉE (JSON) :\n" + contexteAnalyse +
-    "\n\nDOCUMENTS FOURNIS PAR LE VENDEUR (texte extrait) :\n" + docsForPrompt +
-    "\n\nProduis l'analyse croisée selon les règles définies.";
+    "Tu extrais des champs structurés à partir du texte brut d'une annonce immobilière française, collé par un utilisateur. " +
+    "Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, sans balises markdown, selon exactement ce schéma : " +
+    '{"adresseTexte": string|null, "ville": string|null, "codePostal": string|null, "prix": number|null, ' +
+    '"surface": number|null, "pieces": number|null, "typeBien": string|null, "dpe": string|null, ' +
+    '"descriptionCourte": string|null, "confiance": "haute"|"moyenne"|"basse"}. ' +
+    "Règles : n'invente aucune valeur absente du texte, mets null si l'information n'apparaît pas clairement. " +
+    "\"adresseTexte\" doit être la meilleure reconstitution possible d'une adresse ou a minima ville + code postal " +
+    "(nécessaire pour géocoder le bien), jamais une adresse inventée. \"prix\" et \"surface\" sont des nombres purs " +
+    "(sans symbole €, sans espace). \"confiance\" reflète ta certitude sur la localisation extraite.";
 
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -63,9 +41,9 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 1400,
+        max_tokens: 500,
         system,
-        messages: [{ role: "user", content: userMsg }]
+        messages: [{ role: "user", content: "Texte de l'annonce :\n" + text }]
       })
     });
     if (!r.ok) {
@@ -73,8 +51,12 @@ exports.handler = async (event) => {
       return resp(502, { error: "Erreur API Claude", status: r.status, detail: detail.slice(0, 300) });
     }
     const j = await r.json();
-    const text = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
-    return resp(200, { analysis: text || "Aucun contenu généré." });
+    const raw = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("").trim();
+    const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "");
+    let parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch { return resp(502, { error: "Réponse IA non exploitable (JSON invalide)", raw: cleaned.slice(0, 300) }); }
+    return resp(200, parsed);
   } catch (e) {
     return resp(502, { error: "Appel au modèle impossible", detail: String(e) });
   }

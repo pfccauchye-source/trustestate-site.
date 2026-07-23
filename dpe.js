@@ -1,23 +1,22 @@
-// netlify/functions/dvf.js
-// Proxy serveur vers l'API DVF (prix de vente réels).
-// Dégradation propre : en cas d'indisponibilité de la source, renvoie 200 + liste vide
-// (avec un drapeau dataUnavailable) pour ne pas bloquer le reste de l'analyse.
+// netlify/functions/dpe.js
+// Proxy serveur vers l'API DPE de l'ADEME (classe énergie des logements). Évite le blocage CORS.
 exports.handler = async (event) => {
   const q = event.queryStringParameters || {};
-  const { lat, lon, dist = "600" } = q;
+  const { lat, lon, dist = "200" } = q;
   if (!lat || !lon) return resp(400, { error: "Paramètres lat & lon requis" });
-
-  const url = `https://api.cquest.org/dvf?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&dist=${encodeURIComponent(dist)}`;
   try {
-    const ctrl = new AbortController();
-    const to = setTimeout(() => ctrl.abort(), 8000);
-    const r = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" } });
-    clearTimeout(to);
-    if (!r.ok) return resp(200, { resultats: [], features: [], dataUnavailable: true, upstreamStatus: r.status });
+    const base = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe-v2-logements-existants/lines";
+    const params = new URLSearchParams({
+      size: "40",
+      geo_distance: `${lon},${lat},${dist}`,
+      select: "etiquette_dpe,etiquette_ges,date_etablissement_dpe,surface_habitable_logement,type_batiment,_geopoint,adresse_ban"
+    });
+    const r = await fetch(`${base}?${params.toString()}`, { headers: { Accept: "application/json" } });
+    if (!r.ok) return resp(502, { error: "Source DPE indisponible", status: r.status });
     const data = await r.json();
     return resp(200, data);
   } catch (e) {
-    return resp(200, { resultats: [], features: [], dataUnavailable: true, detail: String(e) });
+    return resp(502, { error: "Erreur DPE", detail: String(e) });
   }
 };
 
@@ -27,7 +26,7 @@ function resp(statusCode, body) {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "public, max-age=3600"
+      "Cache-Control": "public, max-age=86400"
     },
     body: JSON.stringify(body)
   };
