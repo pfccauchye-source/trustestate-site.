@@ -137,8 +137,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-</head>
-<body>
+</head><body>
 <header class="top">
   <span class="logo-mark">T</span><span class="brand">TrustEstate</span>
 </header>
@@ -386,9 +385,7 @@
       </div>
     </div>
   </div>
-</section>
-
-<script>
+</section><script>
 const $ = id => document.getElementById(id);
 const C = 2 * Math.PI * 88; // ring circumference
 
@@ -647,8 +644,7 @@ function buildScore(ctx){
       idealPriceEur = fairValueEur * (1 - discount);
       marginEur = prix - idealPriceEur;
       marginPct = (prix - idealPriceEur) / prix;
-      if(negArgs.length === 0) negArgs.push('Aucun signal fort de négociation détecté — bien globalement conforme au marché');
-    }
+      if(negArgs.length === 0) negArgs.push('Aucun signal fort de négociation détecté — bien globalement conforme au marché');}
     valuation = { fairPpm2, rangeLowPpm2, rangeHighPpm2, fairValueEur, rangeLowEur, rangeHighEur, idealPriceEur, marginEur, marginPct, negArgs };
   }
 
@@ -896,9 +892,7 @@ function render(ctx, score){
     }
     $('trend').innerHTML = h;
     $('trendBlock').style.display = (ctx.trendPct != null || comps.length) ? 'block' : 'none';
-  }
-
-  // quartier
+  }// quartier
   if($('quartier')){
     const Q = ctx.quartier;
     if(Q){
@@ -1157,7 +1151,7 @@ async function extractPdfText(file){
     throw new Error("La bibliothèque de lecture PDF n'a pas pu se charger (connexion réseau ?).");
   }
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  const buf = await file.arrayBuffer();
+  const buf = await file.arrayBuffer();const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
   let text = '';
   const maxPages = Math.min(pdf.numPages, 25);
