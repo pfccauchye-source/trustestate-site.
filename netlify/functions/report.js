@@ -1,16 +1,21 @@
 // netlify/functions/report.js
 // Rédige un rapport en langage naturel à partir des données déjà calculées.
 // Appelle l'API Claude côté serveur : la clé n'est JAMAIS exposée au navigateur.
+
+const MODEL = "claude-sonnet-4-6";
+
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return resp(405, { error: "POST requis" });
+  if (event.httpMethod === "OPTIONS") return resp(204, "");
+  if (event.httpMethod !== "POST") return resp(405, { error: "Méthode non autorisée" });
 
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return resp(500, { error: "Clé API absente : définissez la variable d'environnement ANTHROPIC_API_KEY dans Netlify." });
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return resp(500, { error: "Clé API absente : définissez ANTHROPIC_API_KEY dans Netlify." });
 
-  let data;
-  try { data = JSON.parse(event.body || "{}"); }
-  catch { return resp(400, { error: "Corps JSON invalide" }); }
+  let d;
+  try { d = JSON.parse(event.body || "{}"); }
+  catch { return resp(400, { error: "Corps de requête invalide" }); }
 
+  const data = JSON.stringify(d, null, 2);
   const system =
     "Tu es l'analyste immobilier de TrustEstate. À partir UNIQUEMENT des données chiffrées fournies " +
     "(issues de sources publiques : Base Adresse Nationale, DVF Etalab, Géorisques, DPE ADEME, OpenStreetMap), " +
@@ -22,36 +27,42 @@ exports.handler = async (event) => {
     "Risques et points de vigilance, Conclusion. Si donneesSimulees est vrai, indique clairement en tête que les chiffres " +
     "sont un exemple non réel.";
 
-  const user = "Données du bien à analyser :\n" + JSON.stringify(data, null, 2) + "\n\nRédige le rapport.";
-
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-api-key": key,
+        "x-api-key": apiKey,
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
+        model: MODEL,
+        max_tokens: 800,
         system,
-        messages: [{ role: "user", content: user }]
+        messages: [{ role: "user", content: "Données du bien :\n" + data }]
       })
     });
+    if (!r.ok) {
+      const detail = await r.text();
+      return resp(502, { error: "Erreur API Claude", status: r.status, detail: detail.slice(0, 300) });
+    }
     const j = await r.json();
-    if (!r.ok) return resp(502, { error: "Erreur de l'API du modèle", detail: j });
     const text = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
-    return resp(200, { report: text });
+    return resp(200, { report: text || "Aucun contenu généré." });
   } catch (e) {
-    return resp(502, { error: "Échec de l'appel au modèle", detail: String(e) });
+    return resp(502, { error: "Appel au modèle impossible", detail: String(e) });
   }
 };
 
 function resp(statusCode, body) {
   return {
     statusCode,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    body: JSON.stringify(body)
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    },
+    body: typeof body === "string" ? body : JSON.stringify(body)
   };
 }
