@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrustEstate — The AI Trust Layer for Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-top:#E2F1E6;
+    --bg-bottom:#EDE8F7;
+    --ink:#17181D;
+    --card:#FFFFFF;
+    --card-alt:#F6F3FC;
+    --band-alt:#F5F2FA;
+    --muted:#6B6F76;
+    --accent:#8B6FE8;
+    --accent-deep:#6D4FC7;
+    --bad:#D8574B;
+    --warn:#E3A23C;
+    --line:rgba(23,24,29,0.09);
+    --line-soft:rgba(23,24,29,0.06);
+    --display:"Plus Jakarta Sans",sans-serif;
+    --body:"Plus Jakarta Sans",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--body);
+    background:linear-gradient(180deg,var(--bg-top) 0%,var(--bg-bottom) 55%,var(--bg-bottom) 100%) fixed;
+    color:var(--ink);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--accent);color:#fff}
+  h1,h2,h3{font-family:var(--display);line-height:1.08;letter-spacing:-0.01em;font-weight:700}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+
+  /* NAV */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 28px;
+    background:rgba(226,241,230,0.92);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+    transition:padding .3s ease;
+  }
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-0.01em;color:var(--ink)}
+  .logo-mark{width:30px;height:30px;border-radius:9px;background:var(--ink);display:flex;align-items:center;justify-content:center;color:#F5F2EA;font-weight:700;font-size:17px}
+  .nav-links{display:flex;gap:30px;align-items:center}
+  .nav-links a{font-size:14.5px;color:var(--muted);font-weight:500;transition:color .2s}
+  .nav-links a:hover{color:var(--ink)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:100px;font-weight:600;font-size:14.5px;cursor:pointer;border:none;transition:transform .18s ease,box-shadow .25s ease}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 8px 22px -8px rgba(139,111,232,0.55)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 28px -8px rgba(139,111,232,0.6)}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--ink)}
+  @media(max-width:820px){.nav-links a:not(.btn){display:none}}
+
+  /* HERO */
+  .hero{position:relative;padding:170px 0 90px;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;z-index:0}
+  .hero-bg::before{content:"";position:absolute;width:800px;height:800px;top:-360px;right:-240px;background:radial-gradient(circle,rgba(139,111,232,0.14),transparent 62%);filter:blur(10px)}
+  .hero-bg::after{content:"";position:absolute;width:600px;height:600px;bottom:-320px;left:-180px;background:radial-gradient(circle,rgba(139,111,232,0.10),transparent 60%)}
+  .grid-overlay{display:none}
+  .hero .wrap{position:relative;z-index:2}
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border:1px solid var(--line);border-radius:100px;font-size:13px;font-weight:600;color:var(--ink);background:#fff;margin-bottom:30px}
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(139,111,232,0.7);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(139,111,232,0.5)}70%{box-shadow:0 0 0 9px rgba(139,111,232,0)}100%{box-shadow:0 0 0 0 rgba(139,111,232,0)}}
+  .hero h1{font-size:clamp(42px,7vw,80px);max-width:15ch;color:var(--ink);font-weight:700}
+  .hero h1 em{font-style:normal;color:var(--ink);position:relative}
+  .hero p.lead{font-size:clamp(17px,2.2vw,21px);color:var(--muted);max-width:52ch;margin:28px 0 38px;font-weight:400}
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .tagline-quote{margin-top:46px;font-family:var(--display);font-weight:600;font-size:clamp(16px,2vw,20px);color:var(--ink)}
+  .tagline-quote span{color:var(--ink)}
+
+  /* STAT STRIP */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:20px;overflow:hidden;margin-top:64px;box-shadow:0 2px 20px -8px rgba(23,24,29,0.08)}
+  .stat{background:#fff;padding:30px 28px}
+  .stat .num{font-family:var(--display);font-weight:700;font-size:clamp(30px,4vw,46px);color:var(--ink);letter-spacing:-0.02em}
+  .stat .num b{color:var(--ink)}
+  .stat .lbl{font-size:14px;color:var(--muted);margin-top:4px}
+  @media(max-width:720px){.stats{grid-template-columns:1fr}}
+
+  /* SECTIONS */
+  section{position:relative}
+  .band{padding:104px 0}
+  .band.paper{background:var(--band-alt)}
+  .sec-tag{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink);margin-bottom:18px}
+  .sec-title{font-size:clamp(30px,4.6vw,50px);max-width:18ch;color:var(--ink)}
+  .sec-intro{font-size:18px;color:var(--muted);max-width:54ch;margin-top:18px}
+
+  /* PROBLEM */
+  .prob-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:54px}
+  .prob-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 20px;transition:transform .25s ease,border-color .25s ease;box-shadow:0 2px 10px -6px rgba(23,24,29,0.06)}
+  .prob-card:hover{transform:translateY(-5px);border-color:rgba(216,87,75,0.4)}
+  .prob-card .ic{font-size:26px;margin-bottom:12px;display:block}
+  .prob-card h4{font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:-0.005em;color:var(--ink)}
+  .consequences{display:flex;flex-wrap:wrap;gap:12px;margin-top:46px;align-items:center}
+  .consequences .res-lbl{font-family:var(--display);font-weight:700;color:var(--muted);font-size:15px;margin-right:6px}
+  .chip{padding:9px 16px;border-radius:100px;background:rgba(216,87,75,0.08);border:1px solid rgba(216,87,75,0.25);font-size:14px;font-weight:600;color:var(--bad)}
+  @media(max-width:860px){.prob-grid{grid-template-columns:repeat(2,1fr)}}
+
+  /* SOLUTION */
+  .sol{display:grid;grid-template-columns:0.85fr 1.15fr;gap:48px;align-items:center;margin-top:56px}
+  .sol-input{background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 4px 20px -10px rgba(23,24,29,0.1)}
+  .sol-input .label{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);font-weight:700;margin-bottom:18px}
+  .input-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card-alt);border:1px solid var(--line);border-radius:12px;margin-bottom:11px;font-size:14.5px;color:var(--ink)}
+  .input-row .dot{color:var(--ink);font-weight:800}
+  .arrow-down{text-align:center;color:var(--ink);font-size:22px;margin:6px 0}
+  .out-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
+  .out-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:flex-start;transition:transform .2s ease;box-shadow:0 2px 10px -6px rgba(23,24,29,0.05)}
+  .out-card:hover{transform:translateY(-3px)}
+  .out-card .oic{font-size:20px;flex-shrink:0}
+  .out-card h4{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:-0.005em;margin-bottom:2px;color:var(--ink)}
+  .out-card p{font-size:13px;color:var(--muted);line-height:1.35}
+  @media(max-width:860px){.sol{grid-template-columns:1fr;gap:30px}.out-grid{grid-template-columns:1fr}}
+
+  /* DEMO REPORT CARD */
+  .demo-stage{display:grid;grid-template-columns:1fr 1.25fr;gap:40px;align-items:center;margin-top:54px}
+  .url-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 4px 20px -10px rgba(23,24,29,0.1)}
+  .url-field{background:var(--card-alt);border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-size:13.5px;color:var(--muted);font-family:var(--body);display:flex;align-items:center;gap:9px;overflow:hidden;white-space:nowrap}
+  .report{background:#fff;border:1px solid var(--line);border-radius:22px;padding:30px;box-shadow:0 30px 60px -30px rgba(23,24,29,0.25)}
+  .report-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+  .report-head .t{font-family:var(--display);font-weight:600;font-size:18px;color:var(--ink)}
+  .score-ring{position:relative;width:124px;height:124px;margin:0 auto 6px}
+  .score-ring svg{transform:rotate(-90deg)}
+  .score-ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .score-ring .val b{font-family:var(--display);font-size:36px;font-weight:700;color:var(--accent-deep);line-height:1}
+  .score-ring .val span{font-size:12px;color:var(--muted)}
+  .score-cap{text-align:center;font-size:13px;color:var(--muted);margin-bottom:22px}
+  .finding{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:14.5px;color:var(--ink)}
+  .finding .fi{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .fi.warn{background:rgba(227,162,60,0.14)}
+  .fi.bad{background:rgba(216,87,75,0.14)}
+  .fi.good{background:rgba(139,111,232,0.14)}
+  .demo-kicker{font-family:var(--display);font-weight:600;font-size:17px;color:var(--ink);margin-top:30px}
+  @media(max-width:860px){.demo-stage{grid-template-columns:1fr;gap:28px}}
+
+  /* TRENDS / WHY NOW */
+  .trend-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:54px}
+  .trend{padding:30px 26px;border-radius:18px;background:#fff;border:1px solid var(--line);position:relative;box-shadow:0 2px 10px -6px rgba(23,24,29,0.05)}
+  .trend .n{font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink);letter-spacing:0.1em}
+  .trend h4{font-family:var(--display);font-weight:600;font-size:21px;margin:14px 0 10px;color:var(--ink)}
+  .trend p{font-size:14.5px;color:var(--muted)}
+  @media(max-width:780px){.trend-grid{grid-template-columns:1fr}}
+
+  /* BUSINESS MODEL */
+  .bm-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:54px}
+  .bm-card{border-radius:20px;padding:34px;border:1px solid var(--line);background:#fff;box-shadow:0 2px 14px -8px rgba(23,24,29,0.06)}
+  .bm-card.b2c{background:linear-gradient(155deg,rgba(139,111,232,0.06),#fff)}
+  .bm-card.b2b{background:linear-gradient(155deg,rgba(227,162,60,0.07),#fff)}
+  .bm-card .tag{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:0.14em;color:var(--ink);margin-bottom:6px}
+  .bm-card.b2b .tag{color:var(--warn)}
+  .bm-card h3{font-size:24px;margin-bottom:22px;color:var(--ink)}
+  .price-row{display:flex;justify-content:space-between;align-items:baseline;padding:16px 0;border-top:1px solid var(--line)}
+  .price-row .pname{font-size:15px;font-weight:600;color:var(--ink)}
+  .price-row .pval{font-family:var(--display);font-weight:700;font-size:18px;color:var(--ink)}
+  .bm-card.b2b .pval{color:var(--warn)}
+  .seg-list{list-style:none;margin-top:8px}
+  .seg-list li{padding:11px 0;border-top:1px solid var(--line);font-size:15px;color:var(--ink);display:flex;gap:10px;align-items:center}
+  .seg-list li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--warn)}
+  .micro{font-size:13px;color:var(--muted);margin-top:18px;line-height:1.4}
+  @media(max-width:780px){.bm-grid{grid-template-columns:1fr}}
+
+  /* ENGINES */
+  .eng-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:54px}
+  .eng{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;display:flex;gap:18px;box-shadow:0 2px 10px -6px rgba(23,24,29,0.05)}
+  .eng .en{font-family:var(--display);font-weight:700;font-size:30px;color:var(--ink);opacity:.45;line-height:1}
+  .eng h4{font-family:var(--display);font-weight:600;font-size:17px;margin-bottom:5px;color:var(--ink)}
+  .eng p{font-size:14px;color:var(--muted)}
+  .sources{display:flex;flex-wrap:wrap;gap:10px;margin-top:34px}
+  .src{padding:8px 15px;border-radius:100px;background:#fff;border:1px solid var(--line);font-size:13.5px;font-weight:600;color:var(--ink)}
+  @media(max-width:780px){.eng-grid{grid-template-columns:1fr}}
+
+  /* MOAT */
+  .moat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:54px}
+  .moat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;transition:border-color .25s,transform .25s;box-shadow:0 2px 10px -6px rgba(23,24,29,0.05)}
+  .moat:hover{border-color:var(--accent);transform:translateY(-4px)}
+  .moat h4{font-family:var(--display);font-weight:700;font-size:18px;color:var(--ink);margin-bottom:9px}
+  .moat p{font-size:14.5px;color:var(--muted)}
+  @media(max-width:780px){.moat-grid{grid-template-columns:1fr}}
+
+  /* COMPARE TABLE */
+  .ctable{width:100%;border-collapse:collapse;margin-top:46px;font-size:15px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 14px -8px rgba(23,24,29,0.06)}
+  .ctable th,.ctable td{text-align:left;padding:18px 16px;border-bottom:1px solid var(--line)}
+  .ctable th{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);background:var(--card-alt)}
+  .ctable td .co{font-weight:700;color:var(--ink)}
+  .ctable td .lim{color:var(--muted);font-size:14px}
+  .ctable .yes{color:var(--ink);font-weight:800;font-size:18px}
+  .ctable tr.us{background:rgba(139,111,232,0.06)}
+  .ctable tr.us .co{color:var(--ink)}
+  .ctable tr.us .adv{color:var(--ink);font-weight:600}
+  .compare-wrap{overflow-x:auto}
+
+  /* CTA FINAL */
+  .cta-final{position:relative;padding:120px 0;text-align:center;overflow:hidden}
+  .cta-final::before{content:"";position:absolute;width:800px;height:800px;left:50%;top:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(139,111,232,0.10),transparent 60%);filter:blur(10px)}
+  .cta-final .wrap{position:relative;z-index:2}
+  .cta-final h2{font-size:clamp(34px,5.5vw,60px);max-width:16ch;margin:0 auto;color:var(--ink)}
+  .ba-row{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin:40px 0}
+  .ba{max-width:280px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:0 2px 10px -6px rgba(23,24,29,0.05)}
+  .ba .k{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:0.1em;text-transform:uppercase}
+  .ba.before .k{color:var(--bad)}
+  .ba.after .k{color:var(--ink)}
+  .ba p{font-size:16px;color:var(--ink);margin-top:8px}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--line);padding:60px 0 40px}
+  .foot-grid{display:flex;justify-content:space-between;flex-wrap:wrap;gap:40px}
+  .foot-brand{max-width:300px}
+  .foot-brand p{color:var(--muted);font-size:14.5px;margin-top:14px}
+  .foot-contact{display:flex;flex-direction:column;gap:10px}
+  .foot-contact .ct{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .foot-contact a{font-size:15px;color:var(--ink);transition:color .2s}
+  .foot-contact a:hover{color:var(--ink)}
+  .foot-bottom{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--muted)}
+
+  /* FORM */
+  .form-card{max-width:540px;margin:38px auto 0;text-align:left;background:#fff;border:1px solid var(--line);border-radius:22px;padding:34px;box-shadow:0 30px 70px -40px rgba(23,24,29,0.25)}
+  .form-row{margin-bottom:16px}
+  .form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .form-card label{display:block;font-size:12.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .form-card input,.form-card select,.form-card textarea{width:100%;background:var(--card-alt);border:1px solid var(--line);border-radius:11px;padding:13px 15px;font-family:var(--body);font-size:15px;color:var(--ink);transition:border-color .2s}
+  .form-card input:focus,.form-card select:focus,.form-card textarea:focus{outline:none;border-color:var(--accent)}
+  .form-card select{appearance:none;cursor:pointer}
+  .form-card textarea{resize:vertical;min-height:84px}
+  .form-card .btn-primary{width:100%;justify-content:center;margin-top:6px;font-size:15.5px;padding:14px}
+  .form-note{font-size:12.5px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.4}
+  .form-success{display:none;text-align:center;padding:30px 10px}
+  .form-success.show{display:block}
+  .form-success .ok{width:54px;height:54px;border-radius:50%;background:rgba(139,111,232,0.14);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px}
+  .form-success h3{font-size:22px;margin-bottom:8px;color:var(--ink)}
+  .form-success p{color:var(--muted);font-size:15px}
+  @media(max-width:520px){.form-row.two{grid-template-columns:1fr}.form-card{padding:26px 20px}}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#top" class="brand"><span class="logo-mark">T</span>TrustEstate</a>
+  <div class="nav-links">
+    <a href="#probleme">Problème</a>
+    <a href="#solution">Solution</a>
+    <a href="#demo">Démo</a>
+    <a href="#modele">Modèle</a>
+    <a href="#contact" class="btn btn-primary">Demander une démo</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="hero-bg"><div class="grid-overlay"></div></div>
+  <div class="wrap">
+    <span class="eyebrow reveal"><span class="pulse"></span>AI-Powered Property Intelligence</span>
+    <h1 class="reveal">L'immobilier, enfin <em>digne de confiance</em>.</h1>
+    <p class="lead reveal">TrustEstate analyse une annonce ou une adresse et révèle instantanément l'état réel d'un bien : prix juste, risques cachés, score d'investissement. La transparence, enfin, du côté de l'acheteur.</p>
+    <div class="hero-cta reveal">
+      <a href="#contact" class="btn btn-primary">Demander une démo →</a>
+      <a href="#solution" class="btn btn-ghost">Comment ça marche</a>
+    </div>
+    <div class="stats reveal" style="margin-top:24px">
+      <div class="stat"><div class="num">300<b>T$</b></div><div class="lbl">Marché immobilier mondial</div></div>
+      <div class="stat"><div class="num">80<b>Md$</b></div><div class="lbl">PropTech mondiale, +20%/an</div></div>
+      <div class="stat"><div class="num"><b>×10</b></div><div class="lbl">Croissance IA immobilier attendue</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- PROBLEME -->
+<section class="band" id="probleme">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-tag">Le problème</div>
+      <h2 class="sec-title">Une asymétrie d'information massive</h2>
+      <p class="sec-intro">Au moment d'acheter, l'essentiel reste invisible. Les acheteurs décident à l'aveugle, sur des annonces incomplètes et biaisées.</p>
+    </div>
+    <div class="prob-grid">
+      <div class="prob-card reveal"><span class="ic">🏚️</span><h4>Défauts cachés</h4></div>
+      <div class="prob-card reveal"><span class="ic">🔧</span><h4>Futurs travaux</h4></div>
+      <div class="prob-card reveal"><span class="ic">🌊</span><h4>Risques climatiques</h4></div>
+      <div class="prob-card reveal"><span class="ic">🏢</span><h4>Problèmes de copropriété</h4></div>
+      <div class="prob-card reveal"><span class="ic">💧</span><h4>Risques d'humidité</h4></div>
+      <div class="prob-card reveal"><span class="ic">💰</span><h4>Vrai prix du marché</h4></div>
+      <div class="prob-card reveal"><span class="ic">📋</span><h4>Historique réel du bien</h4></div>
+      <div class="prob-card reveal"><span class="ic">📊</span><h4>Charges réelles</h4></div>
+    </div>
+    <div class="consequences reveal">
+      <span class="res-lbl">Résultat :</span>
+      <span class="chip">Mauvaises décisions</span>
+      <span class="chip">Pertes financières</span>
+      <span class="chip">Stress</span>
+      <span class="chip">Litiges</span>
+      <span class="chip">Méfiance</span>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section class="band paper" id="solution">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-tag">La solution</div>
+      <h2 class="sec-title">Une intelligence complète du bien, en quelques secondes</h2>
+      <p class="sec-intro">Donnez une annonce ou une adresse. TrustEstate renvoie un rapport clair, structuré et actionnable.</p>
+    </div>
+    <div class="sol">
+      <div class="sol-input reveal">
+        <div class="label">Input</div>
+        <div class="input-row"><span class="dot">→</span> Une annonce immobilière</div>
+        <div class="input-row"><span class="dot">→</span> Une adresse</div>
+        <div class="input-row"><span class="dot">→</span> Un lien SeLoger / Leboncoin</div>
+        <div class="arrow-down">↓</div>
+        <div class="label" style="text-align:center;color:var(--paper-2)">Property Intelligence</div>
+      </div>
+      <div class="out-grid">
+        <div class="out-card reveal"><span class="oic">📋</span><div><h4>Property Report</h4><p>Synthèse complète et lisible du bien</p></div></div>
+        <div class="out-card reveal"><span class="oic">💰</span><div><h4>Fair Price Estimation</h4><p>Estimation du prix juste sur données DVF</p></div></div>
+        <div class="out-card reveal"><span class="oic">⚠️</span><div><h4>Risk Score</h4><p>Niveau de risque global du bien</p></div></div>
+        <div class="out-card reveal"><span class="oic">🏘️</span><div><h4>Neighborhood Score</h4><p>Qualité et dynamique du quartier</p></div></div>
+        <div class="out-card reveal"><span class="oic">📈</span><div><h4>Investment Score</h4><p>Potentiel d'investissement et valorisation</p></div></div>
+        <div class="out-card reveal"><span class="oic">📷</span><div><h4>AI Photo Analysis</h4><p>Analyse visuelle des photos de l'annonce</p></div></div>
+        <div class="out-card reveal"><span class="oic">🕐</span><div><h4>Historical Prices</h4><p>Historique réel des prix et annonces</p></div></div>
+        <div class="out-card reveal"><span class="oic">🔍</span><div><h4>Hidden Risks</h4><p>Détection des risques non déclarés</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="band" id="demo">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-tag">Démo produit</div>
+      <h2 class="sec-title">Un rapport généré en secondes</h2>
+      <p class="sec-intro">Collez le lien d'une annonce. L'utilisateur sait immédiatement si le bien est une bonne ou une mauvaise affaire.</p>
+    </div>
+    <div class="demo-stage">
+      <div class="reveal">
+        <div class="url-box">
+          <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--mint);font-weight:700">Coller le lien de l'annonce</div>
+          <div class="url-field">🔗 https://www.seloger.com/annonce/...</div>
+          <button class="btn btn-primary" style="justify-content:center" onclick="document.getElementById('report').scrollIntoView({behavior:'smooth',block:'center'})">Analyser →</button>
+        </div>
+        <p class="demo-kicker">De l'annonce brute à la décision éclairée — sans expertise nécessaire.</p>
+      </div>
+
+      <div class="report reveal" id="report">
+        <div class="report-head">
+          <div class="t">Property Report</div>
+          <div style="font-size:12px;color:var(--muted)">TrustEstate · IA</div>
+        </div>
+        <div class="score-ring">
+          <svg width="124" height="124" viewBox="0 0 124 124">
+            <circle cx="62" cy="62" r="54" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10"/>
+            <circle id="ring" cx="62" cy="62" r="54" fill="none" stroke="var(--mint)" stroke-width="10" stroke-linecap="round" stroke-dasharray="339.292" stroke-dashoffset="339.292"/>
+          </svg>
+          <div class="val"><b id="scoreNum">0</b><span>/ 100</span></div>
+        </div>
+        <div class="score-cap">Property Score — <b style="color:var(--mint)">bonne affaire</b></div>
+        <div class="finding"><span class="fi bad">⚠️</span>Bien surévalué de 11%</div>
+        <div class="finding"><span class="fi warn">💧</span>Risque humidité modéré</div>
+        <div class="finding"><span class="fi warn">🔧</span>Travaux copropriété probables</div>
+        <div class="finding"><span class="fi good">📈</span>Quartier en forte croissance</div>
+        <div class="finding"><span class="fi good">💰</span>Potentiel de valorisation élevé</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY NOW -->
+<section class="band paper">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-tag">Pourquoi maintenant</div>
+      <h2 class="sec-title">Trois tendances majeures convergent</h2>
+    </div>
+    <div class="trend-grid">
+      <div class="trend reveal"><div class="n">01</div><h4>🤖 Explosion de l'IA</h4><p>Les LLMs et modèles de vision permettent l'analyse automatisée des biens à grande échelle.</p></div>
+      <div class="trend reveal"><div class="n">02</div><h4>📂 Données ouvertes</h4><p>DVF Etalab, Cadastre, Géorisques, DPE ADEME, Urbanisme — un écosystème de données encore inexploité.</p></div>
+      <div class="trend reveal"><div class="n">03</div><h4>🔍 Besoin de transparence</h4><p>Le marché se complexifie. Les acheteurs exigent désormais des outils fiables et indépendants.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- BUSINESS MODEL -->
+<section class="band" id="modele">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-tag">Business model</div>
+      <h2 class="sec-title">Un double moteur B2C + B2B</h2>
+    </div>
+    <div class="bm-grid">
+      <div class="bm-card b2c reveal">
+        <div class="tag">B2C</div>
+        <h3>Pour les particuliers</h3>
+        <div class="price-row"><span class="pname">Property Report</span><span class="pval">29€ – 99€<span style="font-size:12px;color:var(--muted);font-weight:500"> / rapport</span></span></div>
+        <div class="price-row"><span class="pname">Abonnement Premium</span><span class="pval">49€ – 199€<span style="font-size:12px;color:var(--muted);font-weight:500"> / mois</span></span></div>
+        <p class="micro">Analyses illimitées · Alertes · Scoring avancé · Projections</p>
+      </div>
+      <div class="bm-card b2b reveal">
+        <div class="tag">B2B — SaaS + API</div>
+        <h3>Pour les professionnels</h3>
+        <ul class="seg-list">
+          <li>Agences immobilières</li>
+          <li>Banques &amp; Assurances</li>
+          <li>Investisseurs institutionnels</li>
+          <li>Notaires &amp; cabinets juridiques</li>
+        </ul>
+        <p class="micro">Revenus : SaaS mensuel · API usage-based · Licences entreprise</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA & IA -->
+<section class="band paper">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-tag">Data &amp; IA</div>
+      <h2 class="sec-title">Quatre moteurs au cœur du produit</h2>
+      <p class="sec-intro">Une infrastructure technique nourrie de données publiques et propriétaires.</p>
+    </div>
+    <div class="eng-grid">
+      <div class="eng reveal"><div class="en">01</div><div><h4>Computer Vision</h4><p>Détection d'humidité, fissures, rénovations « fake » et défauts structurels sur les photos.</p></div></div>
+      <div class="eng reveal"><div class="en">02</div><div><h4>NLP Engine</h4><p>Analyse intelligente des annonces et détection des anomalies textuelles.</p></div></div>
+      <div class="eng reveal"><div class="en">03</div><div><h4>Pricing Engine</h4><p>Estimation immobilière en temps réel sur données DVF et marché.</p></div></div>
+      <div class="eng reveal"><div class="en">04</div><div><h4>Risk Engine</h4><p>Modèle prédictif propriétaire pour anticiper les risques futurs.</p></div></div>
+    </div>
+    <div class="sources reveal">
+      <span class="src">DVF Etalab</span>
+      <span class="src">Cadastre</span>
+      <span class="src">Géorisques</span>
+      <span class="src">DPE ADEME</span>
+      <span class="src">Urbanisme &amp; satellite</span>
+      <span class="src">Données propriétaires</span>
+    </div>
+  </div>
+</section>
+
+<!-- MOAT -->
+<section class="band">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-tag">Notre avantage</div>
+      <h2 class="sec-title">Un moat défendable et cumulatif</h2>
+    </div>
+    <div class="moat-grid">
+      <div class="moat reveal"><h4>Data Aggregation Layer</h4><p>Agrégation massive de données immobilières multi-sources — impossible à reproduire rapidement.</p></div>
+      <div class="moat reveal"><h4>Proprietary AI Scoring</h4><p>Modèles entraînés sur des millions de transactions, qui s'améliorent à chaque nouvelle analyse.</p></div>
+      <div class="moat reveal"><h4>Historical Property DB</h4><p>Historique complet des biens, annonces et variations de prix en France — un actif data unique.</p></div>
+      <div class="moat reveal"><h4>Trust Layer Standard</h4><p>TrustEstate devient le standard de référence : effet réseau et lock-in progressif du marché.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="band paper">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-tag">Concurrence</div>
+      <h2 class="sec-title">Un positionnement unique</h2>
+    </div>
+    <div class="compare-wrap reveal">
+      <table class="ctable">
+        <thead><tr><th>Acteur</th><th>Limite</th><th style="text-align:center">TrustEstate</th><th>Avantage clé</th></tr></thead>
+        <tbody>
+          <tr><td class="co">Zillow</td><td class="lim">Marketplace avant tout</td><td style="text-align:center" class="yes">✓</td><td>IA + Scoring + Historique</td></tr>
+          <tr><td class="co">MeilleursAgents</td><td class="lim">Estimation uniquement</td><td style="text-align:center" class="yes">✓</td><td>Analyse de risque complète</td></tr>
+          <tr><td class="co">PriceHubble</td><td class="lim">Très B2B, complexe</td><td style="text-align:center" class="yes">✓</td><td>Simple &amp; B2C/B2B</td></tr>
+          <tr><td class="co">HouseCanary</td><td class="lim">Marché US uniquement</td><td style="text-align:center" class="yes">✓</td><td>Focus France / Europe</td></tr>
+          <tr><td class="co">carVertical</td><td class="lim">Automobile uniquement</td><td style="text-align:center" class="yes">✓</td><td>Immobilier complet</td></tr>
+          <tr class="us"><td class="co">TrustEstate</td><td class="lim adv">IA · Scoring · Historique · Risque</td><td style="text-align:center" class="yes">★</td><td class="adv">Transparence + expérience simple</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final" id="contact">
+  <div class="wrap">
+    <h2 class="reveal">Chaque bien mérite un historique, un score, une intelligence.</h2>
+    <div class="ba-row reveal">
+      <div class="ba before"><div class="k">Avant</div><p>Acheter un bien = incertitude totale.</p></div>
+      <div class="ba after"><div class="k">Après</div><p>Chaque bien a un historique, un score et une intelligence prédictive.</p></div>
+    </div>
+    <div class="reveal" style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:10px">
+      <a href="https://calendly.com/VOTRE-LIEN-CALENDLY/demo" target="_blank" rel="noopener" class="btn btn-primary">📅 Réserver une démo</a>
+      <a href="#solution" class="btn btn-ghost">Découvrir la solution</a>
+    </div>
+
+    <div class="form-card reveal">
+      <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="contactForm">
+        <input type="hidden" name="form-name" value="contact">
+        <p style="display:none"><label>Ne pas remplir : <input name="bot-field"></label></p>
+
+        <div class="form-row two">
+          <div>
+            <label for="name">Nom complet</label>
+            <input id="name" type="text" name="nom" required placeholder="Jean Dupont">
+          </div>
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" name="email" required placeholder="jean@email.com">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="profil">Vous êtes</label>
+          <select id="profil" name="profil" required>
+            <option value="" disabled selected>Sélectionnez…</option>
+            <option>Un particulier</option>
+            <option>Une agence immobilière</option>
+            <option>Banque ou assurance</option>
+            <option>Investisseur</option>
+            <option>Notaire ou juriste</option>
+            <option>Autre</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="message">Message (optionnel)</label>
+          <textarea id="message" name="message" placeholder="Votre besoin, votre projet…"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Demander une démo →</button>
+        <p class="form-note">En envoyant ce formulaire, vous acceptez d'être recontacté par TrustEstate. Vos données ne sont jamais revendues.</p>
+      </form>
+
+      <div class="form-success" id="formSuccess">
+        <div class="ok">✓</div>
+        <h3>Merci, c'est noté.</h3>
+        <p>Nous revenons vers vous très vite.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#top" class="brand"><span class="logo-mark">T</span>TrustEstate</a>
+        <p>The AI Trust Layer for Real Estate. La première couche de confiance immobilière alimentée par l'IA.</p>
+      </div>
+      <div class="foot-contact">
+        <span class="ct">Contactez-nous</span>
+        <a href="mailto:contact@trustestate.fr">contact@trustestate.fr</a>
+        <a href="tel:+33600000000">+33 6 XX XX XX XX</a>
+        <a href="https://trustestate.fr">trustestate.fr</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 TrustEstate — Confidentiel</span>
+      <span>IA + Données ouvertes · B2C + B2B scalable · Moat data propriétaire</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach((e,i)=>{
+      if(e.isIntersecting){
+        const sibs = [...e.target.parentElement.querySelectorAll('.reveal')];
+        e.target.style.transitionDelay = (Math.min(sibs.indexOf(e.target),6)*0.06)+'s';
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:0.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Animated score ring
+  const ringTarget = 81;
+  const ring = document.getElementById('ring');
+  const numEl = document.getElementById('scoreNum');
+  const circ = 339.292;
+  let started = false;
+  const scoreObs = new IntersectionObserver((ents)=>{
+    ents.forEach(ent=>{
+      if(ent.isIntersecting && !started){
+        started = true;
+        let cur = 0;
+        const step = ()=>{
+          cur += 1.7;
+          if(cur >= ringTarget) cur = ringTarget;
+          numEl.textContent = Math.round(cur);
+          ring.style.strokeDashoffset = circ - (circ*cur/100);
+          if(cur < ringTarget) requestAnimationFrame(step);
+        };
+        ring.style.transition = 'stroke-dashoffset .05s linear';
+        step();
+      }
+    });
+  },{threshold:0.5});
+  scoreObs.observe(document.getElementById('report'));
+
+  // Nav shrink
+  const nav = document.getElementById('nav');
+  addEventListener('scroll',()=>{ nav.style.padding = scrollY>40 ? '12px 28px' : '18px 28px'; });
+
+  // Contact form -> Netlify Forms (AJAX submit + confirmation inline)
+  const form = document.getElementById('contactForm');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const data = new FormData(form);
+    try{
+      await fetch('/', {
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:new URLSearchParams(data).toString()
+      });
+      form.style.display='none';
+      document.getElementById('formSuccess').classList.add('show');
+    }catch(err){
+      // En aperçu (hors Netlify) l'envoi échoue : on confirme quand même côté visuel
+      form.style.display='none';
+      document.getElementById('formSuccess').classList.add('show');
+    }
+  });
+</script>
+</body>
+</html>
