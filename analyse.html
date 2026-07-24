@@ -1231,7 +1231,12 @@ if($('ddAnalyze')){
   });
 }
 
-// ===== Export PDF du rapport =====
+/// ===== Export PDF du rapport =====
+function hexToRgb(hex){
+  const h = hex.replace('#','');
+  return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
+}
+
 function exportPdf(){
   const ctx = window.__lastCtx, score = window.__lastScore;
   if(!ctx || !score){ return; }
@@ -1241,103 +1246,176 @@ function exportPdf(){
   }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'pt', format:'a4' });
-  const pageW = doc.internal.pageSize.getWidth(), marginX = 46;
+  const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+  const marginX = 48, usableW = pageW - marginX*2, colX = marginX + 260;
   let y = 56;
-  const mint = [15,179,126], ink = [16,22,31], muted = [110,118,130], coral=[255,122,89];
+  const mint = [15,140,100], ink = [23,28,38], muted = [120,128,140], coral=[214,90,64], lightBg=[244,246,248], lineCol=[228,231,235];
 
-  function checkPage(extra){ if(y + extra > 780){ doc.addPage(); y = 56; } }
-  function h1(t){ checkPage(30); doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...ink); doc.text(t, marginX, y); y += 24; }
-  function h2(t){ checkPage(24); doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(15,140,100); doc.text(t, marginX, y); y += 18; }
-  function p(t, opts){ 
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...(opts&&opts.color||ink));
-    const lines = doc.splitTextToSize(String(t), pageW - marginX*2);
-    checkPage(lines.length*13 + 4);
-    doc.text(lines, marginX, y); y += lines.length*13 + 6;
+  function newPage(){
+    doc.addPage();
+    y = 56;
+    footerPending = true;
   }
-  function kv(k,v){ checkPage(15); doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...ink); doc.text(String(k)+' :', marginX, y);
-    doc.setFont('helvetica','normal'); doc.text(String(v), marginX+180, y); y += 15; }
-  function rule(){ checkPage(10); doc.setDrawColor(225,225,225); doc.line(marginX, y, pageW-marginX, y); y += 12; }
+  let footerPending = false;
+  function checkPage(extra){ if(y + extra > pageH - 60){ newPage(); } }
 
-  // Header
-  doc.setFillColor(16,22,31); doc.rect(0,0,pageW,64,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
-  doc.text('TrustEstate', marginX, 40);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(200,200,200);
-  doc.text("Rapport d'analyse — document indicatif, ne remplace pas une expertise professionnelle", marginX, 54);
-  y = 90;
+  function h1(t){
+    checkPage(34);
+    doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(...ink);
+    const lines = doc.splitTextToSize(t, usableW);
+    doc.text(lines, marginX, y); y += lines.length*22 + 6;
+  }
+  function h2(t){
+    checkPage(28);
+    doc.setFillColor(...mint); doc.rect(marginX, y-10, 4, 13, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(...mint);
+    doc.text(t.toUpperCase(), marginX+12, y);
+    y += 20;
+  }
+  function p(t, opts){
+    doc.setFont('helvetica', (opts&&opts.bold)?'bold':'normal'); doc.setFontSize((opts&&opts.size)||10.5);
+    doc.setTextColor(...((opts&&opts.color)||ink));
+    const lines = doc.splitTextToSize(String(t), usableW - (opts&&opts.indent||0));
+    checkPage(lines.length*14 + 4);
+    doc.text(lines, marginX + (opts&&opts.indent||0), y); y += lines.length*14 + (opts&&opts.gap!=null?opts.gap:7);
+  }
+  function bullet(t, opts){
+    checkPage(16);
+    const dotColor = (opts && opts.color) || mint;
+    doc.setFillColor(...dotColor); doc.circle(marginX+3, y-3.5, 2.6, 'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...ink);
+    const lines = doc.splitTextToSize(String(t), usableW - 16);
+    doc.text(lines, marginX+14, y); y += lines.length*14 + 6;
+  }
+  function kv(k,v,opts){
+    checkPage(17);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...muted);
+    const klines = doc.splitTextToSize(String(k), colX - marginX - 10);
+    doc.text(klines, marginX, y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(...((opts&&opts.color)||ink));
+    doc.text(String(v), colX, y);
+    y += Math.max(klines.length*13, 15);
+  }
+  function rule(gapBefore, gapAfter){
+    checkPage(10);
+    y += (gapBefore!=null?gapBefore:2);
+    doc.setDrawColor(...lineCol); doc.line(marginX, y, pageW-marginX, y);
+    y += (gapAfter!=null?gapAfter:14);
+  }
+  // barre de score horizontale (label + barre colorée + valeur)
+  function scoreBar(label, value, note){
+    checkPage(30);
+    const col = value>=70 ? [31,180,120] : value>=45 ? [220,150,40] : [200,90,60];
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...ink);
+    doc.text(String(label), marginX, y);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text(value+'/100', pageW-marginX, y, { align:'right' });
+    y += 10;
+    const barW = usableW, barH = 7;
+    doc.setFillColor(...lightBg); doc.roundedRect(marginX, y, barW, barH, 3, 3, 'F');
+    if(value>0) { doc.setFillColor(...col); doc.roundedRect(marginX, y, Math.max(barW*value/100, 8), barH, 3, 3, 'F'); }
+    y += barH + 6;
+    if(note){ doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...muted); doc.text(note, marginX, y); y += 14; }
+    else y += 6;
+  }
+
+  // ===== En-tête =====
+  doc.setFillColor(...ink); doc.rect(0,0,pageW,68,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(255,255,255);
+  doc.text('TrustEstate', marginX, 42);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(190,196,204);
+  doc.text("Rapport d'analyse immobilière — document indicatif, ne remplace pas une expertise professionnelle", marginX, 57);
+  y = 96;
 
   h1(ctx.geo.label || 'Adresse non renseignée');
-  p((ctx.geo.city||'') + ' ' + (ctx.geo.postcode||'') + (ctx.simulated ? '  —  DONNÉES SIMULÉES (exemple)' : ''), {color: ctx.simulated?coral:muted});
-  y += 4;
+  p((ctx.geo.city||'') + (ctx.geo.postcode?(' '+ctx.geo.postcode):'') + (ctx.simulated ? '   —   DONNÉES SIMULÉES (exemple, non réelles)' : ''),
+    { color: ctx.simulated?coral:muted, size:10.5, gap:14 });
 
-  // Recommandation
-  h2('Recommandation finale');
-  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...ink);
-  checkPage(20); doc.text(score.reco.emoji + '  ' + score.reco.label, marginX, y); y += 16;
-  kv('TrustScore global', score.total + ' / 100');
-  y += 6; rule();
+  // ===== Recommandation (bandeau coloré, sans emoji) =====
+  const recoRgb = hexToRgb(score.reco.color);
+  checkPage(46);
+  doc.setFillColor(recoRgb[0], recoRgb[1], recoRgb[2]); doc.setDrawColor(recoRgb[0], recoRgb[1], recoRgb[2]);
+  doc.roundedRect(marginX, y, usableW, 40, 6, 6, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(13.5); doc.setTextColor(255,255,255);
+  doc.text(score.reco.label, marginX+16, y+25);
+  doc.setFont('helvetica','bold'); doc.setFontSize(15);
+  doc.text('TrustScore ' + score.total + '/100', pageW-marginX-16, y+25, { align:'right' });
+  y += 40 + 18;
 
-  // Axes
+  // ===== Score par axe =====
   h2('Score par axe (pondéré)');
-  kv('Valeur (30%)', score.axes.valeur + '/100');
-  kv('Risque (25%)', score.axes.risque + '/100');
-  kv('Potentiel (25%)' + (score.estimated.potentiel?' — estimation':''), score.axes.potentiel + '/100');
-  kv('Qualité (20%)' + (score.estimated.qualite?' — estimation':''), score.axes.qualite + '/100');
-  y += 6; rule();
+  scoreBar('Valeur (30%)', score.axes.valeur);
+  scoreBar('Risque (25%)', score.axes.risque);
+  scoreBar('Potentiel (25%)', score.axes.potentiel, score.estimated.potentiel ? 'Estimation — données de tendance limitées' : null);
+  scoreBar('Qualité (20%)', score.axes.qualite, score.estimated.qualite ? 'Estimation — données de quartier limitées' : null);
+  rule(4, 16);
 
-  // Critères détaillés
+  // ===== Critères détaillés =====
   h2('Score détaillé par critère');
-  score.criteres.forEach(c => kv(c.label, c.value!=null ? c.value+'/100' : '—'));
-  y += 6; rule();
+  score.criteres.forEach(c => {
+    if(c.value == null){ kv(c.label, '— (' + c.note + ')'); }
+    else scoreBar(c.label, c.value, c.note);
+  });
+  rule(4, 16);
 
-  // Valorisation
+  // ===== Valorisation =====
   if(score.valuation){
     const v = score.valuation;
     h2('Valorisation & négociation');
-    if(v.fairValueEur) kv('Valeur estimée', fmtEur(v.fairValueEur)+' €');
-    else kv('Prix médian local', fmtEur(v.fairPpm2)+' €/m²');
+    if(v.fairValueEur) kv('Valeur estimée', fmtEur(v.fairValueEur)+' €', {color:mint});
+    else kv('Prix médian local', fmtEur(v.fairPpm2)+' €/m²', {color:mint});
     if(v.rangeLowEur && v.rangeHighEur) kv('Fourchette de marché', fmtEur(v.rangeLowEur)+' – '+fmtEur(v.rangeHighEur)+' €');
     if(v.idealPriceEur && ctx.prix){
-      kv('Prix idéal de négociation', fmtEur(v.idealPriceEur)+' €');
-      kv('Marge de négociation', v.marginEur>0 ? '~'+fmtEur(v.marginEur)+' € ('+Math.round(v.marginPct*100)+' %)' : 'Aucune');
+      kv('Prix idéal de négociation', fmtEur(v.idealPriceEur)+' €', {color:mint});
+      kv('Marge de négociation', v.marginEur>0 ? '~'+fmtEur(v.marginEur)+' € ('+Math.round(v.marginPct*100)+' %)' : 'Aucune — prix déjà favorable');
     }
-    if(v.negArgs && v.negArgs.length){ y+=2; v.negArgs.forEach(a => p('• '+a)); }
-    y += 4; rule();
+    y += 6;
+    if(v.negArgs && v.negArgs.length) v.negArgs.forEach(a => bullet(a, {color: hexToRgb('#FFB547')}));
+    rule(4, 16);
   }
 
-  // Locatif
+  // ===== Locatif =====
   if(score.rental){
     const rt = score.rental;
     h2('Analyse locative (estimation)');
-    kv('Loyer mensuel estimé', rt.loyerMensuel ? '~'+fmtEur(rt.loyerMensuel)+' €' : '—');
+    kv('Loyer mensuel estimé', rt.loyerMensuel ? '~'+fmtEur(rt.loyerMensuel)+' €' : '—', {color:mint});
     kv('Rendement brut', '~'+rt.yieldPct.toFixed(1)+' %');
     kv('Rendement net (estimation)', '~'+rt.netYieldPct.toFixed(1)+' %');
     kv('Demande locative', rt.demande);
-    p('Estimation grossière par paliers de prix, à affiner avec des données de loyers réelles.', {color:muted});
-    y += 2; rule();
+    y += 4;
+    p('Estimation grossière par paliers de prix, à affiner avec des données de loyers réelles.', {color:muted, size:9, gap:4});
+    rule(4, 16);
   }
 
-  // Insights
+  // ===== Insights =====
   h2('Insights actionnables');
-  score.insights.forEach(i => p('• '+i.t));
-  y += 4; rule();
+  score.insights.forEach(i => bullet(i.t, { color: i.sev==='bad'?coral : i.sev==='warn'?hexToRgb('#FFB547') : mint }));
+  rule(4, 16);
 
-  // Risques
+  // ===== Risques =====
   h2('Risques identifiés');
   const rl = ctx.riskList || [];
-  if(rl.length) rl.forEach(r => p('• '+r.label)); else p('Aucun risque naturel majeur signalé.');
-  y += 4; rule();
+  if(rl.length) rl.forEach(r => bullet(r.label, {color: r.sev==='bad'?coral:hexToRgb('#FFB547')}));
+  else bullet('Aucun risque naturel majeur signalé.', {color:mint});
+  rule(4, 16);
 
-  // Points d'attention
+  // ===== Points d'attention =====
   h2("Points d'attention");
-  score.findings.forEach(f => p('• '+f.t));
+  score.findings.forEach(f => bullet(f.t, { color: f.sev==='bad'?coral : f.sev==='warn'?hexToRgb('#FFB547') : mint }));
 
-  // Footer note
-  checkPage(30);
-  y += 10; doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-  doc.text('Généré par TrustEstate à partir de données publiques (Base Adresse Nationale, DVF Etalab, Géorisques, DPE ADEME, OpenStreetMap).', marginX, y, {maxWidth: pageW-marginX*2});
-  y += 12;
-  doc.text('Analyse indicative, sans valeur d\'expertise. Ne remplace pas l\'avis d\'un professionnel.', marginX, y);
+  // ===== Notes de bas de document =====
+  checkPage(50);
+  y += 10; rule(0, 10);
+  p('Sources : Base Adresse Nationale, DVF Etalab, Géorisques, DPE ADEME, OpenStreetMap.', {color:muted, size:8.5, gap:4});
+  p("Analyse indicative fondée sur des données publiques, sans valeur d'expertise. Ne remplace pas un diagnostic ou un avis professionnel.", {color:muted, size:8.5, gap:0});
+
+  // ===== Pagination (numéro de page en bas, sur toutes les pages) =====
+  const totalPages = doc.internal.getNumberOfPages();
+  for(let i=1; i<=totalPages; i++){
+    doc.setPage(i);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+    doc.text('TrustEstate — page ' + i + ' / ' + totalPages, pageW/2, pageH-24, { align:'center' });
+  }
 
   const filename = 'TrustEstate_' + (ctx.geo.city || 'rapport').replace(/[^a-z0-9]+/gi,'_') + '.pdf';
   doc.save(filename);
